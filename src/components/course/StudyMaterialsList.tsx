@@ -8,6 +8,7 @@ import { selectionHaptic, tapHaptic } from "@/lib/native/haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import StudyMaterialAdminMenu from "./StudyMaterialAdminMenu";
 import DocReaderShell from "@/components/library/DocReaderShell";
+import ReaderErrorBoundary from "@/components/library/ReaderErrorBoundary";
 import { openResource } from "@/lib/openResource";
 
 type Filter = "all" | StudyMaterialKind;
