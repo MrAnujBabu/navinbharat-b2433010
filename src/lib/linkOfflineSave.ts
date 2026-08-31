@@ -178,17 +178,24 @@ export async function saveLinkOffline({
   // ---- fresh download ---------------------------------------------------
   const folder = folderId ? { id: folderId } : await svc.getOrCreateFolder(folderName);
 
-  let item: { id: string } | null = null;
-  if (size === null) {
-    // Unknown size — stream with a hard ceiling instead of trusting the host.
-    const blob = await fetchCapped(url, max, signal);
-    if (blob) {
-      const name = nameFromUrl(url, title);
-      const file = new File([blob], name, { type: blob.type });
-      item = await svc.addFileToFolder(folder.id, file, "lesson");
-    }
+  // Always pull the bytes: "Save offline" that quietly stores a bare URL is a
+  // file that dies the moment the student loses signal. The size probe above
+  // has already rejected anything over the cap, and `fetchCapped` still keeps
+  // its hard ceiling for hosts that under-report.
+  let blob = await fetchCapped(url, max, signal);
+  if (!blob) {
+    const { fetchDocumentBlob } = await import("./fetchDocumentBlob");
+    blob = await fetchDocumentBlob(url, signal).catch(() => null);
   }
-  if (!item) item = await svc.addUrlToFolder(folder.id, url, title);
+  if (!blob) {
+    throw new Error("Could not download this link — the host may block downloads.");
+  }
+  if (blob.size > max) throw tooLarge(blob.size);
+
+  const file = new File([blob], nameFromUrl(url, title), {
+    type: blob.type || "application/octet-stream",
+  });
+  const item = await svc.addFileToFolder(folder.id, file, "lesson");
 
   emitRefresh();
   return { itemId: item.id, folderName };
