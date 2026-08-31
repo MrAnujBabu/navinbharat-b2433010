@@ -26,8 +26,10 @@ import {
   type TrustedHost,
   type TrustedHostCategory,
 } from "@/hooks/useTrustedHosts";
+import PdfLinkAllowlist from "@/components/admin/PdfLinkAllowlist";
 
 const CATEGORY_LABEL: Record<TrustedHostCategory, string> = {
+  pdf:     "External PDF Links (pdf-proxy)",
   frame:   "PDF / Notes / Embed (frame-src)",
   image:   "Image CDN (img-src)",
   media:   "Video / Audio CDN (media-src)",
@@ -37,6 +39,7 @@ const CATEGORY_LABEL: Record<TrustedHostCategory, string> = {
 };
 
 const CATEGORY_DIRECTIVE: Record<TrustedHostCategory, string> = {
+  pdf:     "frame-src",
   frame:   "frame-src",
   image:   "img-src",
   media:   "media-src",
@@ -44,6 +47,7 @@ const CATEGORY_DIRECTIVE: Record<TrustedHostCategory, string> = {
   script:  "script-src",
   connect: "connect-src",
 };
+
 
 function normalizeHost(input: string): string {
   let s = input.trim().toLowerCase();
@@ -100,8 +104,8 @@ export default function AdminTrustedHosts() {
       enabled,
     };
     const { error } = editing
-      ? await supabase.from("trusted_hosts").update(payload).eq("id", editing.id)
-      : await supabase.from("trusted_hosts").insert(payload);
+      ? await supabase.from("trusted_hosts").update(payload as never).eq("id", editing.id)
+      : await supabase.from("trusted_hosts").insert(payload as never);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success(editing ? "Host updated" : "Host added");
@@ -185,26 +189,36 @@ export default function AdminTrustedHosts() {
             </div>
           </div>
 
-          <Tabs defaultValue="list">
+          <Tabs defaultValue="pdf">
             <TabsList>
+              <TabsTrigger value="pdf">PDF Links</TabsTrigger>
               <TabsTrigger value="list">All Hosts ({hosts.length})</TabsTrigger>
               <TabsTrigger value="csp">CSP Snippet</TabsTrigger>
               <TabsTrigger value="help">How it works</TabsTrigger>
             </TabsList>
 
+            {/* PDF LINKS */}
+            <TabsContent value="pdf" className="mt-4">
+              <PdfLinkAllowlist hosts={hosts} refetch={refetch} />
+            </TabsContent>
+
             {/* LIST */}
             <TabsContent value="list" className="mt-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <Label className="text-sm">Filter:</Label>
-                <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
-                  <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All categories</SelectItem>
-                    {(Object.keys(CATEGORY_LABEL) as TrustedHostCategory[]).map((c) => (
-                      <SelectItem key={c} value={c}>{CATEGORY_LABEL[c]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex flex-wrap items-center gap-2">
+                {(["all", ...(Object.keys(CATEGORY_LABEL) as TrustedHostCategory[])] as const).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setFilter(c as TrustedHostCategory | "all")}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                      filter === c
+                        ? "bg-foreground text-background"
+                        : "bg-muted text-foreground/70 hover:bg-muted/70"
+                    }`}
+                  >
+                    {c === "all" ? "All" : CATEGORY_LABEL[c as TrustedHostCategory]}
+                  </button>
+                ))}
               </div>
 
               {loading ? (

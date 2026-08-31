@@ -544,6 +544,9 @@ function dropSharedArchiveNode(itemId: string): void {
 Deno.serve(async (req) => {
   // Best-effort one-time bucket config (fire-and-forget; no await).
   ensureCacheBucketConfigured();
+  // Admin-managed PDF host allowlist (cached 60s; no per-request DB hit).
+  await refreshDynamicPdfHosts();
+
 
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: headersWithCors() });
@@ -1058,6 +1061,62 @@ const GOOGLE_DOCS_HOST = /^docs\.google\.com$/i;
 const GOOGLE_EXPORT_PATH =
   /^\/(document|spreadsheets|presentation)\/d\/[A-Za-z0-9_-]+\/export\/?$/;
 
+// Admin-managed allowlist (public.trusted_hosts, category = 'pdf'). Loaded
+// with the service-role client and cached in memory so the per-Range-request
+// hot path never touches Postgres. The static ALLOWED_HOSTS list above stays
+// as a fail-safe baseline if the DB read fails.
+const DYNAMIC_HOSTS_TTL_MS = 60_000;
+let dynamicHosts = new Set<string>();
+let dynamicHostsLoadedAt = 0;
+let dynamicHostsInFlight: Promise<void> | null = null;
+
+export function _setDynamicPdfHostsForTest(hosts: string[]): void {
+  dynamicHosts = new Set(hosts.map((h) => h.trim().toLowerCase()).filter(Boolean));
+  dynamicHostsLoadedAt = Date.now();
+}
+
+/** Refresh the admin allowlist at most once per TTL. Never throws. */
+export async function refreshDynamicPdfHosts(): Promise<void> {
+  if (!adminClient) return;
+  if (Date.now() - dynamicHostsLoadedAt < DYNAMIC_HOSTS_TTL_MS) return;
+  if (dynamicHostsInFlight) return dynamicHostsInFlight;
+  dynamicHostsInFlight = (async () => {
+    try {
+      const { data, error } = await adminClient
+        .from("trusted_hosts")
+        .select("host")
+        .in("category", ["pdf", "frame"])
+        .eq("enabled", true);
+      if (error) throw error;
+      dynamicHosts = new Set(
+        (data ?? [])
+          .map((r) => String((r as { host?: string }).host ?? "").trim().toLowerCase())
+          .filter(Boolean),
+      );
+      dynamicHostsLoadedAt = Date.now();
+    } catch (err) {
+      // Keep the previous snapshot; never fail a read because the table is
+      // unreachable. Static baseline still applies.
+      console.error("pdf-proxy: trusted_hosts load failed", (err as Error)?.message);
+      dynamicHostsLoadedAt = Date.now() - DYNAMIC_HOSTS_TTL_MS / 2;
+    } finally {
+      dynamicHostsInFlight = null;
+    }
+  })();
+  return dynamicHostsInFlight;
+}
+
+/** host matches an admin entry exactly, or is a subdomain of one. */
+function matchesDynamicHost(host: string): boolean {
+  if (dynamicHosts.size === 0) return false;
+  const h = host.toLowerCase();
+  if (dynamicHosts.has(h)) return true;
+  for (const entry of dynamicHosts) {
+    if (h.endsWith(`.${entry}`)) return true;
+  }
+  return false;
+}
+
 export function isAllowedPdfUrl(raw: string): boolean {
   try {
     const u = new URL(raw);
@@ -1072,11 +1131,13 @@ export function isAllowedPdfUrl(raw: string): boolean {
     if (host.includes(":")) return false;                 // IPv6 literal
     if (/^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(host)) return false;
     if (GOOGLE_DOCS_HOST.test(host)) return GOOGLE_EXPORT_PATH.test(u.pathname);
-    return ALLOWED_HOSTS.some((re) => re.test(host));
+    if (ALLOWED_HOSTS.some((re) => re.test(host))) return true;
+    return matchesDynamicHost(host);
   } catch {
     return false;
   }
 }
+
 
 // Manually follow up to N redirects, re-validating each hop against the
 // allow-list. `redirect: "follow"` would let a compromised or misconfigured
