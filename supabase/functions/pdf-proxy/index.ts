@@ -544,6 +544,9 @@ function dropSharedArchiveNode(itemId: string): void {
 Deno.serve(async (req) => {
   // Best-effort one-time bucket config (fire-and-forget; no await).
   ensureCacheBucketConfigured();
+  // Admin-managed PDF host allowlist (cached 60s; no per-request DB hit).
+  await refreshDynamicPdfHosts();
+
 
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: headersWithCors() });
