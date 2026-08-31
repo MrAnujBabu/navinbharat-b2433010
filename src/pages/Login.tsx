@@ -27,7 +27,7 @@ const Login = () => {
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       toast.success("Welcome back!");
-      const destination = location.state?.from || "/dashboard";
+      const destination = location.state?.from || "/downloads";
       navigate(destination, { replace: true });
     }
   }, [isAuthenticated, authLoading, navigate, location.state]);
