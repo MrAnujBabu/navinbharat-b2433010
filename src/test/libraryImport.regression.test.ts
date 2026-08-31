@@ -140,21 +140,24 @@ describe("saveLinkOffline", () => {
     expect(addFileToFolder).not.toHaveBeenCalled();
   });
 
-  it("saves into the Link Imports folder when the size is known and fine", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        ({ ok: true, status: 200, headers: new Headers({ "content-length": "1024" }) }) as unknown as Response,
-      ),
-    );
+  it("downloads the bytes when the size is known and fine (never a bare URL)", async () => {
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method === "HEAD" || init?.headers) {
+        return { ok: true, status: 200, headers: new Headers({ "content-length": "1024" }) } as unknown as Response;
+      }
+      return streamOf(1024, 1, { "content-type": "application/pdf" });
+    });
+    vi.stubGlobal("fetch", fetchMock);
     const res = await saveLinkOffline({
       url: "https://cdn.jsdelivr.net/ok.pdf",
       title: "Ok",
       source: "cdn",
     });
     expect(getOrCreateFolder).toHaveBeenCalledWith(OFFLINE_FOLDER);
-    expect(addUrlToFolder).toHaveBeenCalled();
-    expect(res.itemId).toBe("item-url");
+    expect(addFileToFolder).toHaveBeenCalled();
+    expect(addUrlToFolder).not.toHaveBeenCalled();
+    expect((addFileToFolder.mock.calls[0][1] as File).name).toBe("ok.pdf");
+    expect(res.folderName).toBe(OFFLINE_FOLDER);
   });
 
   it("streams with a hard cap when the host hides the size (OOM guard)", async () => {
