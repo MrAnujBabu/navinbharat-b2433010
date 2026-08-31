@@ -1085,7 +1085,7 @@ export async function refreshDynamicPdfHosts(): Promise<void> {
       const { data, error } = await adminClient
         .from("trusted_hosts")
         .select("host")
-        .eq("category", "pdf")
+        .in("category", ["pdf", "frame"])
         .eq("enabled", true);
       if (error) throw error;
       dynamicHosts = new Set(
