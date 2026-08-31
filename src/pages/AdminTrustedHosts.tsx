@@ -28,6 +28,7 @@ import {
 } from "@/hooks/useTrustedHosts";
 
 const CATEGORY_LABEL: Record<TrustedHostCategory, string> = {
+  pdf:     "External PDF Links (pdf-proxy)",
   frame:   "PDF / Notes / Embed (frame-src)",
   image:   "Image CDN (img-src)",
   media:   "Video / Audio CDN (media-src)",
@@ -37,6 +38,7 @@ const CATEGORY_LABEL: Record<TrustedHostCategory, string> = {
 };
 
 const CATEGORY_DIRECTIVE: Record<TrustedHostCategory, string> = {
+  pdf:     "frame-src",
   frame:   "frame-src",
   image:   "img-src",
   media:   "media-src",
@@ -44,6 +46,7 @@ const CATEGORY_DIRECTIVE: Record<TrustedHostCategory, string> = {
   script:  "script-src",
   connect: "connect-src",
 };
+
 
 function normalizeHost(input: string): string {
   let s = input.trim().toLowerCase();
