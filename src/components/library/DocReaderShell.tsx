@@ -562,8 +562,13 @@ export default function DocReaderShell({
             initialPage={initialPage}
             onPageChange={handlePageChange}
             onReady={refreshRefs}
+            // Explicit tap forwarding: locally-opened (blob:/capacitor:) PDFs
+            // render inside the canvas surface, whose taps were not reaching
+            // the frame's onClick — so the header never toggled offline.
+            onSurfaceTap={handleSurfaceTap}
             readerId={readerId}
           />
+
         </div>
 
         {/* Reader overlays — autoscroll FAB + Drive-style page pill.
