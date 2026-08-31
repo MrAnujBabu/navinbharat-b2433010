@@ -291,14 +291,31 @@ export default function DocReaderShell({
   // Showing/hiding the floating header changes the surface box by the header
   // height (`top` animates over 300ms). Re-measure after the transition so the
   // rendered page refills the reclaimed strip instead of leaving a blank band
-  // where the header used to be.
+  // where the header used to be. Scheduled onto an idle frame (like
+  // useReaderFullscreen does) so repeated taps can't queue a chain of PDF
+  // canvas re-rasterises on low-RAM Android devices.
   useEffect(() => {
+    let idleId: number | null = null;
     const t = window.setTimeout(() => {
-      notifyPortalHostChanged();
-      try { window.dispatchEvent(new Event("resize")); } catch { /* ignore */ }
+      const fire = () => {
+        notifyPortalHostChanged();
+        try { window.dispatchEvent(new Event("resize")); } catch { /* ignore */ }
+      };
+      const ric = (window as unknown as {
+        requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+      }).requestIdleCallback;
+      if (typeof ric === "function") idleId = ric(fire, { timeout: 300 });
+      else idleId = requestAnimationFrame(fire);
     }, 320);
-    return () => window.clearTimeout(t);
-  }, [headerVisible, landscape]);
+    return () => {
+      window.clearTimeout(t);
+      if (idleId !== null) {
+        const cic = (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
+        if (typeof cic === "function") cic(idleId);
+        else cancelAnimationFrame(idleId);
+      }
+    };
+
 
 
 
