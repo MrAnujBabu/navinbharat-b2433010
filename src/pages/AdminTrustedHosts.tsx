@@ -104,8 +104,8 @@ export default function AdminTrustedHosts() {
       enabled,
     };
     const { error } = editing
-      ? await supabase.from("trusted_hosts").update(payload).eq("id", editing.id)
-      : await supabase.from("trusted_hosts").insert(payload);
+      ? await supabase.from("trusted_hosts").update(payload as never).eq("id", editing.id)
+      : await supabase.from("trusted_hosts").insert(payload as never);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success(editing ? "Host updated" : "Host added");

@@ -41,7 +41,7 @@ export function useTrustedHosts(category?: TrustedHostCategory) {
       .select("*")
       .order("category", { ascending: true })
       .order("host", { ascending: true });
-    if (category) q = q.eq("category", category);
+    if (category) q = q.eq("category", category as never);
     const { data, error } = await q;
     if (!error && data) setHosts(data as unknown as TrustedHost[]);
     setLoading(false);
@@ -56,7 +56,7 @@ export function useTrustedHosts(category?: TrustedHostCategory) {
         .select("*")
         .order("category", { ascending: true })
         .order("host", { ascending: true });
-      if (category) q = q.eq("category", category);
+      if (category) q = q.eq("category", category as never);
       const { data, error } = await q;
       if (cancelled) return;
       if (!error && data) setHosts(data as unknown as TrustedHost[]);
