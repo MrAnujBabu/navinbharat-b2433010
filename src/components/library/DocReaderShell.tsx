@@ -315,6 +315,8 @@ export default function DocReaderShell({
         else cancelAnimationFrame(idleId);
       }
     };
+  }, [headerVisible, landscape]);
+
 
 
 
