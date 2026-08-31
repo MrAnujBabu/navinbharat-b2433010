@@ -19,7 +19,25 @@
 import { isResolvableStorageViewerUrl, resolveStorageBytes } from "./native/naveenStoragePdf";
 import { fetchPdfViaNativeHttp } from "./nativePdfHttp";
 import { fetchWithAuthRetry } from "./pdfProxyAuthRetry";
-import { googleDrivePdfProxyUrl, isGoogleDrive, renderablePdfUrl, sanitizeRemoteUrl } from "./pdfViewerUrl";
+import {
+  googleDrivePdfProxyUrl,
+  isGoogleDrive,
+  remotePdfProxyUrl,
+  renderablePdfUrl,
+  sanitizeRemoteUrl,
+} from "./pdfViewerUrl";
+
+/** Cross-origin http(s) URL that isn't already a pdf-proxy call. */
+function isProxyableRemote(url: string): boolean {
+  try {
+    const u = new URL(url, window.location.href);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+    if (u.origin === window.location.origin) return false;
+    return !/\/functions\/v1\/pdf-proxy/.test(u.pathname);
+  } catch {
+    return false;
+  }
+}
 
 /** Ordered list of URLs to try for a document, most-likely-to-work first. */
 export function documentSourceCandidates(rawUrl: string): string[] {
@@ -32,6 +50,12 @@ export function documentSourceCandidates(rawUrl: string): string[] {
 
   if (isGoogleDrive(url)) push(googleDrivePdfProxyUrl(url));
   push(renderablePdfUrl(url));
+  // Any other cross-origin host: relay through pdf-proxy. The proxy keeps its
+  // own server-side allow-list (admin-managed `trusted_hosts` + the static
+  // baseline), so offering it as a candidate can't widen what we can reach —
+  // it only gives admin-approved hosts a CORS-safe path in the browser, which
+  // the hardcoded CDN list in `renderablePdfUrl` never covered.
+  if (isProxyableRemote(url)) push(remotePdfProxyUrl(url));
   // Direct URL last: it is the one that CORS-fails in the WebView, but it is
   // still the right answer for plain same-origin / CORS-open hosts.
   push(url);
