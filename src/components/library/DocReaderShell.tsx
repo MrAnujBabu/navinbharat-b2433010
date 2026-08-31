@@ -288,6 +288,17 @@ export default function DocReaderShell({
     return () => window.clearTimeout(t);
   }, [isFullscreen]);
 
+  // Showing/hiding the floating header changes the surface box by the header
+  // height (`top` animates over 300ms). Re-measure after the transition so the
+  // rendered page refills the reclaimed strip instead of leaving a blank band
+  // where the header used to be.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      notifyPortalHostChanged();
+      try { window.dispatchEvent(new Event("resize")); } catch { /* ignore */ }
+    }, 320);
+    return () => window.clearTimeout(t);
+  }, [headerVisible, landscape]);
 
 
 
@@ -344,6 +355,7 @@ export default function DocReaderShell({
       return next;
     });
   };
+
 
   const toggleReadingMode = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -445,12 +457,19 @@ export default function DocReaderShell({
           ref={setHeaderEl}
           // z-50 keeps the toolbar above the save-progress overlay (z-40) and
           // every viewer overlay, so its controls never go dead mid-download.
-          className={`safe-area-top absolute left-0 right-0 top-0 z-50 flex min-h-[48px] items-center gap-2 border-b bg-card/95 px-3 shadow-sm backdrop-blur transition-transform duration-300 ${
-            headerVisible ? "translate-y-0 pointer-events-auto" : "-translate-y-full pointer-events-none"
+          // When hidden we ALSO fade + `invisible` it: on Android WebViews the
+          // translate alone left a pale sliver of the bar's safe-area padding
+          // across the top of locally-opened (offline) PDFs.
+          className={`safe-area-top absolute left-0 right-0 top-0 z-50 flex min-h-[48px] items-center gap-2 border-b bg-card/95 px-3 shadow-sm backdrop-blur transition-[transform,opacity] duration-300 ${
+            headerVisible
+              ? "translate-y-0 opacity-100 pointer-events-auto"
+              : "-translate-y-full opacity-0 invisible pointer-events-none"
           }`}
+          aria-hidden={!headerVisible}
 
           onClick={(e) => e.stopPropagation()}
         >
+
           <Button
             variant="ghost"
             size="icon"
@@ -554,8 +573,13 @@ export default function DocReaderShell({
             initialPage={initialPage}
             onPageChange={handlePageChange}
             onReady={refreshRefs}
+            // Explicit tap forwarding: locally-opened (blob:/capacitor:) PDFs
+            // render inside the canvas surface, whose taps were not reaching
+            // the frame's onClick — so the header never toggled offline.
+            onSurfaceTap={handleSurfaceTap}
             readerId={readerId}
           />
+
         </div>
 
         {/* Reader overlays — autoscroll FAB + Drive-style page pill.
