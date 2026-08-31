@@ -345,6 +345,7 @@ export default function DocReaderShell({
     });
   };
 
+
   const toggleReadingMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     setReadingMode((v) => {
