@@ -270,8 +270,15 @@ PageLoader.displayName = "PageLoader";
 // is forwarded to Sentry as a bogus issue.
 const PublicRoute = forwardRef<unknown, { element: React.ReactElement }>(({ element }, _ref) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
   if (isLoading) return <PageLoader />;
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  if (isAuthenticated) {
+    // Honour a deep-link the guard interrupted; signing in from /login lands on
+    // the reader-facing Downloads page, everything else falls back to the dashboard.
+    const from = (location.state as { from?: string } | null)?.from;
+    const fallback = location.pathname === "/login" ? "/downloads" : "/dashboard";
+    return <Navigate to={from || fallback} replace />;
+  }
   return element;
 });
 PublicRoute.displayName = "PublicRoute";
