@@ -26,6 +26,8 @@ import { useReaderFullscreen } from "../../hooks/useReaderFullscreen";
 import { ROTATION_FRAME_ATTR, rotationFrameStyle, notifyPortalHostChanged } from "../../lib/rotationFrame";
 import usePortalHost from "../../hooks/usePortalHost";
 import useKeyboardInset from "../../hooks/useKeyboardInset";
+import useOverlayBackClose from "../../hooks/useOverlayBackClose";
+
 import { lazyWithRetry } from "../../lib/lazyWithRetry";
 import { notesSheetMetrics } from "../../lib/reader/notesSheetMetrics";
 
