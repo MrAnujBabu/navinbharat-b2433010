@@ -26,6 +26,8 @@ import { useReaderFullscreen } from "../../hooks/useReaderFullscreen";
 import { ROTATION_FRAME_ATTR, rotationFrameStyle, notifyPortalHostChanged } from "../../lib/rotationFrame";
 import usePortalHost from "../../hooks/usePortalHost";
 import useKeyboardInset from "../../hooks/useKeyboardInset";
+import useOverlayBackClose from "../../hooks/useOverlayBackClose";
+
 import { lazyWithRetry } from "../../lib/lazyWithRetry";
 import { notesSheetMetrics } from "../../lib/reader/notesSheetMetrics";
 
@@ -85,6 +87,9 @@ export default function DocReaderShell({
   const [initialPage, setInitialPage] = useState<number | undefined>(undefined);
   const idleTimer = useRef<number | null>(null);
   const pageTimer = useRef<number | null>(null);
+  /** Timestamp of the last accepted surface tap — de-dupes the double path. */
+  const lastTapRef = useRef(0);
+
   const viewerRef = useRef<PdfViewerHandle>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
   // Real header height (safe-area padding + content). The surface used to be
@@ -291,21 +296,47 @@ export default function DocReaderShell({
   // Showing/hiding the floating header changes the surface box by the header
   // height (`top` animates over 300ms). Re-measure after the transition so the
   // rendered page refills the reclaimed strip instead of leaving a blank band
-  // where the header used to be.
+  // where the header used to be. Scheduled onto an idle frame (like
+  // useReaderFullscreen does) so repeated taps can't queue a chain of PDF
+  // canvas re-rasterises on low-RAM Android devices.
   useEffect(() => {
+    let idleId: number | null = null;
     const t = window.setTimeout(() => {
-      notifyPortalHostChanged();
-      try { window.dispatchEvent(new Event("resize")); } catch { /* ignore */ }
+      const fire = () => {
+        notifyPortalHostChanged();
+        try { window.dispatchEvent(new Event("resize")); } catch { /* ignore */ }
+      };
+      const ric = (window as unknown as {
+        requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+      }).requestIdleCallback;
+      if (typeof ric === "function") idleId = ric(fire, { timeout: 300 });
+      else idleId = requestAnimationFrame(fire);
     }, 320);
-    return () => window.clearTimeout(t);
+    return () => {
+      window.clearTimeout(t);
+      if (idleId !== null) {
+        const cic = (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
+        if (typeof cic === "function") cic(idleId);
+        else cancelAnimationFrame(idleId);
+      }
+    };
   }, [headerVisible, landscape]);
 
 
+
+
+
+  // Android hardware back must close the reader overlay itself, not navigate
+  // the page underneath. Callers like Downloads / FolderView already register
+  // their own sentinel, but StudyMaterialsList and LessonAttachmentsSheet do
+  // not — owning one here gives every caller the overlay back contract.
+  useOverlayBackClose(true, onBack, "doc-reader");
 
   // While the reader is mounted, kill the body's safe-area gutters and force a
   // black page background. Otherwise the light theme's white body shows through
   // in the status-bar / notch band as a white strip above the PDF.
   useEffect(() => {
+
     document.body.classList.add("nb-doc-reader-open");
     return () => document.body.classList.remove("nb-doc-reader-open");
   }, []);
@@ -349,12 +380,23 @@ export default function DocReaderShell({
     // Single tap reveals/hides chrome + FABs (rotate, autoscroll, save).
     // Works in reading mode too so users can quickly access controls without
     // exiting reading mode.
+    //
+    // The same physical tap can reach us twice: once via `onSurfaceTap` on the
+    // PDF surface (needed for local blob:/capacitor: files, whose canvas taps
+    // don't bubble reliably in the Android WebView) and once via the rotation
+    // frame's onClick when the click DOES bubble (online PDFs / web preview).
+    // Without this guard the header toggled off and instantly back on, so the
+    // tap looked dead. Collapse both into one toggle per gesture.
+    const now = Date.now();
+    if (now - lastTapRef.current < 350) return;
+    lastTapRef.current = now;
     setHeaderVisible((v) => {
       const next = !v;
       if (next) scheduleHide();
       return next;
     });
   };
+
 
 
   const toggleReadingMode = (e: React.MouseEvent) => {
