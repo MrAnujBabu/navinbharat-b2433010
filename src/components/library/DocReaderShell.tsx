@@ -368,12 +368,23 @@ export default function DocReaderShell({
     // Single tap reveals/hides chrome + FABs (rotate, autoscroll, save).
     // Works in reading mode too so users can quickly access controls without
     // exiting reading mode.
+    //
+    // The same physical tap can reach us twice: once via `onSurfaceTap` on the
+    // PDF surface (needed for local blob:/capacitor: files, whose canvas taps
+    // don't bubble reliably in the Android WebView) and once via the rotation
+    // frame's onClick when the click DOES bubble (online PDFs / web preview).
+    // Without this guard the header toggled off and instantly back on, so the
+    // tap looked dead. Collapse both into one toggle per gesture.
+    const now = Date.now();
+    if (now - lastTapRef.current < 350) return;
+    lastTapRef.current = now;
     setHeaderVisible((v) => {
       const next = !v;
       if (next) scheduleHide();
       return next;
     });
   };
+
 
 
   const toggleReadingMode = (e: React.MouseEvent) => {
