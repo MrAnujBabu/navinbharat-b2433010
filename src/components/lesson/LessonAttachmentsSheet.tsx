@@ -6,6 +6,7 @@ import { FileText, Download } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
 import DocReaderShell from "../library/DocReaderShell";
+import ReaderErrorBoundary from "../library/ReaderErrorBoundary";
 import { useDownloads } from "../../hooks/useDownloads";
 import { isGoogleDocs, isGoogleDrive, isNotion, googleDrivePdfProxyUrl } from "../../lib/pdfViewerUrl";
 import { openResource } from "../../lib/openResource";
@@ -240,16 +241,21 @@ export function LessonAttachmentsSheet({ open, onOpenChange, lessonId, lessonTit
       )}
 
       {viewer && (
-        <DocReaderShell
-          url={viewer.url}
-          title={viewer.title}
-          filename={safeDecodeFileName(viewer.note?.file_name) || viewer.title}
-          itemId={viewer.note?.id ? `att_${viewer.note.id}` : undefined}
-          source="attachment"
-          onBack={closeReader}
-          onDownloaded={() => viewer.note && handleDownload(viewer.note)}
-        />
+        // A pdf.js worker death / OOM here must close the reader, not blank the
+        // whole lesson route (app-crash-shield).
+        <ReaderErrorBoundary onBack={closeReader} resetKey={viewer.url} label="lesson-attachment-viewer">
+          <DocReaderShell
+            url={viewer.url}
+            title={viewer.title}
+            filename={safeDecodeFileName(viewer.note?.file_name) || viewer.title}
+            itemId={viewer.note?.id ? `att_${viewer.note.id}` : undefined}
+            source="attachment"
+            onBack={closeReader}
+            onDownloaded={() => viewer.note && handleDownload(viewer.note)}
+          />
+        </ReaderErrorBoundary>
       )}
+
     </>
   );
 }

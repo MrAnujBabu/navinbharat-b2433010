@@ -8,6 +8,7 @@ import { selectionHaptic, tapHaptic } from "@/lib/native/haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import StudyMaterialAdminMenu from "./StudyMaterialAdminMenu";
 import DocReaderShell from "@/components/library/DocReaderShell";
+import ReaderErrorBoundary from "@/components/library/ReaderErrorBoundary";
 import { openResource } from "@/lib/openResource";
 
 type Filter = "all" | StudyMaterialKind;
@@ -204,23 +205,28 @@ export default function StudyMaterialsList({ courseId, chapters }: Props) {
       ))}
     </div>
     {viewer && (
-      <DocReaderShell
-        url={viewer.url}
-        title={viewer.title}
-        filename={viewer.filename}
-        source="attachment"
-        onBack={() => {
-          // Prefer history.back() so the popstate listener above closes
-          // the viewer and the sentinel gets popped in one step — keeps
-          // hardware-back and UI-back behavior identical.
-          if (window.history.state?.pdfFullscreen) {
-            window.history.back();
-          } else {
-            setViewer(null);
-          }
-        }}
-      />
+      // Scoped crash shield: a reader failure closes the reader instead of
+      // taking down the whole course page (app-crash-shield).
+      <ReaderErrorBoundary onBack={() => setViewer(null)} resetKey={viewer.url} label="study-materials-viewer">
+        <DocReaderShell
+          url={viewer.url}
+          title={viewer.title}
+          filename={viewer.filename}
+          source="attachment"
+          onBack={() => {
+            // Prefer history.back() so the popstate listener above closes
+            // the viewer and the sentinel gets popped in one step — keeps
+            // hardware-back and UI-back behavior identical.
+            if (window.history.state?.pdfFullscreen) {
+              window.history.back();
+            } else {
+              setViewer(null);
+            }
+          }}
+        />
+      </ReaderErrorBoundary>
     )}
+
     </>
   );
 }
