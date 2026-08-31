@@ -85,6 +85,9 @@ export default function DocReaderShell({
   const [initialPage, setInitialPage] = useState<number | undefined>(undefined);
   const idleTimer = useRef<number | null>(null);
   const pageTimer = useRef<number | null>(null);
+  /** Timestamp of the last accepted surface tap — de-dupes the double path. */
+  const lastTapRef = useRef(0);
+
   const viewerRef = useRef<PdfViewerHandle>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
   // Real header height (safe-area padding + content). The surface used to be
