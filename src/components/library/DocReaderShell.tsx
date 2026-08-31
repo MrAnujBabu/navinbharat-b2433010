@@ -288,6 +288,17 @@ export default function DocReaderShell({
     return () => window.clearTimeout(t);
   }, [isFullscreen]);
 
+  // Showing/hiding the floating header changes the surface box by the header
+  // height (`top` animates over 300ms). Re-measure after the transition so the
+  // rendered page refills the reclaimed strip instead of leaving a blank band
+  // where the header used to be.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      notifyPortalHostChanged();
+      try { window.dispatchEvent(new Event("resize")); } catch { /* ignore */ }
+    }, 320);
+    return () => window.clearTimeout(t);
+  }, [headerVisible, landscape]);
 
 
 
