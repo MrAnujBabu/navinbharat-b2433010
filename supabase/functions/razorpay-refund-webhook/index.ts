@@ -1,0 +1,217 @@
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { verifyWebhookSignature } from "../_shared/razorpaySignature.ts";
+import { loadRazorpayWebhookSecret } from "../_shared/razorpayEnv.ts";
+
+// No CORS headers — this is a server-to-server webhook endpoint
+const jsonHeaders = { 'Content-Type': 'application/json' };
+
+
+function getSupabaseAdmin() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
+}
+
+async function logSecurityAlert(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  alertType: string,
+  details: Record<string, unknown>,
+  sourceIp: string | null
+) {
+  try {
+    await supabaseAdmin.from('security_alerts').insert({
+      alert_type: alertType,
+      details,
+      source_ip: sourceIp,
+    });
+  } catch (e) {
+    console.error('Failed to log security alert:', e);
+  }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: jsonHeaders });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405, headers: jsonHeaders
+    });
+  }
+
+  const sourceIp = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || null;
+
+  try {
+    const WEBHOOK_SECRET = loadRazorpayWebhookSecret();
+    if (!WEBHOOK_SECRET) {
+      console.error('RAZORPAY_WEBHOOK_SECRET not configured');
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: jsonHeaders
+      });
+    }
+
+    const rawBody = await req.text();
+    const razorpaySignature = req.headers.get('x-razorpay-signature');
+
+    if (!razorpaySignature) {
+      console.error('Missing x-razorpay-signature header');
+      return new Response(JSON.stringify({ error: 'Missing signature' }), {
+        status: 400, headers: jsonHeaders
+      });
+    }
+
+    const supabaseAdmin = getSupabaseAdmin();
+
+    // Verify HMAC-SHA256 over the RAW body with a timing-safe comparison.
+    const signatureOk = await verifyWebhookSignature({
+      rawBody,
+      signature: razorpaySignature,
+      webhookSecret: WEBHOOK_SECRET,
+    });
+    if (!signatureOk) {
+
+      console.error('Refund webhook signature mismatch — possible tampering attempt');
+      await logSecurityAlert(supabaseAdmin, 'webhook_signature_mismatch', {
+        webhook: 'razorpay-refund-webhook',
+        event: 'payment.refunded',
+        message: 'HMAC signature verification failed — possible replay or tampering attack',
+      }, sourceIp);
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        status: 400, headers: jsonHeaders
+      });
+    }
+
+    const payload = JSON.parse(rawBody);
+    const event = payload.event;
+
+    console.log('Razorpay refund webhook event:', event);
+
+    // ── REPLAY PROTECTION: check first, commit only after side-effects. ──
+    // Recording before the payment/enrollment updates would swallow Razorpay's
+    // retry if either update failed after the event was marked processed.
+    const eventId = req.headers.get('x-razorpay-event-id') || payload.id;
+    if (eventId) {
+      const { data: prior } = await supabaseAdmin
+        .from('webhook_events')
+        .select('event_id')
+        .eq('event_id', eventId)
+        .maybeSingle();
+      if (prior) {
+        console.log('Duplicate refund webhook event ignored:', eventId);
+        return new Response(JSON.stringify({ status: 'duplicate_event' }), {
+          status: 200, headers: jsonHeaders
+        });
+      }
+    }
+
+    if (event !== 'payment.refunded') {
+      return new Response(JSON.stringify({ status: 'ignored', event }), {
+        status: 200, headers: jsonHeaders
+      });
+    }
+
+    const payment = payload.payload?.payment?.entity;
+    if (!payment) {
+      console.error('No payment entity in refund webhook payload');
+      return new Response(JSON.stringify({ error: 'Invalid payload' }), {
+        status: 400, headers: jsonHeaders
+      });
+    }
+
+    const razorpayOrderId = payment.order_id;
+    if (!razorpayOrderId) {
+      console.error('Missing order_id in refund webhook');
+      return new Response(JSON.stringify({ error: 'Missing order_id' }), {
+        status: 400, headers: jsonHeaders
+      });
+    }
+
+    // Look up the payment record
+    const { data: paymentRecord, error: lookupError } = await supabaseAdmin
+      .from('razorpay_payments')
+      .select('id, status, user_id, course_id')
+      .eq('razorpay_order_id', razorpayOrderId)
+      .maybeSingle();
+
+    if (lookupError || !paymentRecord) {
+      console.error('Payment record not found for order:', razorpayOrderId, lookupError);
+      return new Response(JSON.stringify({ error: 'Payment record not found' }), {
+        status: 404, headers: jsonHeaders
+      });
+    }
+
+    // Idempotency: skip if already refunded
+    if (paymentRecord.status === 'refunded') {
+      console.log('Refund already processed for order:', razorpayOrderId);
+      return new Response(JSON.stringify({ status: 'already_processed' }), {
+        status: 200, headers: jsonHeaders
+      });
+    }
+
+    // Update payment status to refunded
+    const { error: updatePaymentError } = await supabaseAdmin
+      .from('razorpay_payments')
+      .update({ status: 'refunded', updated_at: new Date().toISOString() })
+      .eq('razorpay_order_id', razorpayOrderId);
+
+    if (updatePaymentError) {
+      console.error('Failed to update payment to refunded:', updatePaymentError);
+      return new Response(JSON.stringify({ error: 'Payment refund update failed, please retry' }), {
+        status: 500, headers: jsonHeaders
+      });
+    } else {
+      console.log('Payment marked as refunded:', razorpayOrderId);
+    }
+
+    // Deactivate enrollment
+    const { error: enrollError } = await supabaseAdmin
+      .from('enrollments')
+      .update({ status: 'refunded' })
+      .eq('user_id', paymentRecord.user_id)
+      .eq('course_id', paymentRecord.course_id)
+      .eq('status', 'active');
+
+    if (enrollError) {
+      console.error('Failed to deactivate enrollment:', enrollError);
+      return new Response(JSON.stringify({ error: 'Enrollment refund update failed, please retry' }), {
+        status: 500, headers: jsonHeaders
+      });
+    } else {
+      console.log('Enrollment deactivated for user:', paymentRecord.user_id, 'course:', paymentRecord.course_id);
+      // Forensic trail for enrollment revocation via refund.
+      await supabaseAdmin.from('audit_log').insert({
+        user_id: paymentRecord.user_id,
+        action: 'refund_enrollment_revoked',
+        table_name: 'enrollments',
+        record_count: 1,
+        metadata: {
+          razorpay_order_id: razorpayOrderId,
+          course_id: paymentRecord.course_id,
+        },
+      }).then(({ error }) => {
+        if (error) console.error('Failed to write refund audit log:', error);
+      });
+    }
+
+    if (eventId) {
+      const { error: dedupeError } = await supabaseAdmin
+        .from('webhook_events')
+        .insert({ event_id: eventId, source: 'razorpay-refund', event_type: event });
+      if (dedupeError && (dedupeError as { code?: string }).code !== '23505') {
+        console.error('Failed to record refund webhook event (non-fatal):', dedupeError);
+      }
+    }
+
+    return new Response(JSON.stringify({ status: 'ok' }), {
+      status: 200, headers: jsonHeaders
+    });
+
+  } catch (error) {
+    console.error('Refund webhook error:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500, headers: jsonHeaders
+    });
+  }
+});

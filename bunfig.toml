@@ -1,7 +1,9 @@
+# Bun install configuration.
+#
+# The registry pin mirrors .npmrc: sandboxes (Replit / Lovable) proxy npm
+# through private hosts and bake those absolute tarball URLs into bun.lock.
+# Those hosts are unreachable from GitHub Actions runners, which surfaces as
+# `ConnectionRefused` / `FailedToOpenSocket` on the same handful of packages
+# on every retry. Keep this pinned to the public registry.
 [install]
-saveTextLockfile = true
-# 24h supply-chain guard: skip package versions published less than a day ago.
-minimumReleaseAge = 86400
-# Each entry bypasses the 24h guard for one package — confirm with the user
-# before adding any.
-minimumReleaseAgeExcludes = ["@lovable.dev/vite-tanstack-config", "@lovable.dev/mcp-js", "@lovable.dev/email-js", "@lovable.dev/webhooks-js"]
+registry = "https://registry.npmjs.org"
