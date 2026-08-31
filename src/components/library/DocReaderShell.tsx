@@ -446,12 +446,19 @@ export default function DocReaderShell({
           ref={setHeaderEl}
           // z-50 keeps the toolbar above the save-progress overlay (z-40) and
           // every viewer overlay, so its controls never go dead mid-download.
-          className={`safe-area-top absolute left-0 right-0 top-0 z-50 flex min-h-[48px] items-center gap-2 border-b bg-card/95 px-3 shadow-sm backdrop-blur transition-transform duration-300 ${
-            headerVisible ? "translate-y-0 pointer-events-auto" : "-translate-y-full pointer-events-none"
+          // When hidden we ALSO fade + `invisible` it: on Android WebViews the
+          // translate alone left a pale sliver of the bar's safe-area padding
+          // across the top of locally-opened (offline) PDFs.
+          className={`safe-area-top absolute left-0 right-0 top-0 z-50 flex min-h-[48px] items-center gap-2 border-b bg-card/95 px-3 shadow-sm backdrop-blur transition-[transform,opacity] duration-300 ${
+            headerVisible
+              ? "translate-y-0 opacity-100 pointer-events-auto"
+              : "-translate-y-full opacity-0 invisible pointer-events-none"
           }`}
+          aria-hidden={!headerVisible}
 
           onClick={(e) => e.stopPropagation()}
         >
+
           <Button
             variant="ghost"
             size="icon"
