@@ -6,6 +6,7 @@ import { FileText, Download } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
 import DocReaderShell from "../library/DocReaderShell";
+import ReaderErrorBoundary from "../library/ReaderErrorBoundary";
 import { useDownloads } from "../../hooks/useDownloads";
 import { isGoogleDocs, isGoogleDrive, isNotion, googleDrivePdfProxyUrl } from "../../lib/pdfViewerUrl";
 import { openResource } from "../../lib/openResource";
