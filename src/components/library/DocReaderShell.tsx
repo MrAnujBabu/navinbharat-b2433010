@@ -324,10 +324,17 @@ export default function DocReaderShell({
 
 
 
+  // Android hardware back must close the reader overlay itself, not navigate
+  // the page underneath. Callers like Downloads / FolderView already register
+  // their own sentinel, but StudyMaterialsList and LessonAttachmentsSheet do
+  // not — owning one here gives every caller the overlay back contract.
+  useOverlayBackClose(true, onBack, "doc-reader");
+
   // While the reader is mounted, kill the body's safe-area gutters and force a
   // black page background. Otherwise the light theme's white body shows through
   // in the status-bar / notch band as a white strip above the PDF.
   useEffect(() => {
+
     document.body.classList.add("nb-doc-reader-open");
     return () => document.body.classList.remove("nb-doc-reader-open");
   }, []);
