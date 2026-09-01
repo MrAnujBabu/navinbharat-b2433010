@@ -59,6 +59,8 @@ const StatCard = ({ title, value, icon: Icon, sub, color }: {
 
 const COLORS = ["hsl(142,71%,45%)", "hsl(0,72%,50%)", "hsl(216,19%,26%)", "hsl(38,92%,50%)"];
 
+type AnalyticsTab = "learning" | "users" | "payments";
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const AdminAnalytics = () => {
   const navigate = useNavigate();
