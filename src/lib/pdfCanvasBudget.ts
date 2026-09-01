@@ -75,16 +75,28 @@ export function canvasMegabytes(cssWidth: number, pageRatio: number, dpr: number
  * slowly" complaint. Archive scans are heavy, but a phone with ≥4GB RAM can
  * comfortably hold the neighbouring pages, so only release when zoomed in or
  * when the device is genuinely low on memory.
+ *
+ * Long documents are the third case: with release off, EVERY page the reader
+ * scrolls past keeps its bitmap alive (measured: 40/40 canvases live after one
+ * pass through a 40-page PDF). That grows without bound on a 300-page batch
+ * note and is the classic low-RAM Android OOM. Past `LONG_DOCUMENT_PAGES` we
+ * always release distant pages; the 1200px IntersectionObserver margin keeps
+ * the neighbours mounted, so scrolling stays flicker-free.
  */
+export const LONG_DOCUMENT_PAGES = 20;
+
 export function shouldReleaseDistantPages(
   isArchive: boolean,
   zoom: number,
   deviceMemoryGb?: number,
+  pageCount?: number,
 ): boolean {
   if (zoom > 1.5) return true;
   const gb = Number.isFinite(deviceMemoryGb) && (deviceMemoryGb as number) > 0
     ? (deviceMemoryGb as number)
     : DEFAULT_DEVICE_MEMORY_GB;
+  if (Number.isFinite(pageCount) && (pageCount as number) > LONG_DOCUMENT_PAGES) return true;
   return isArchive && gb < 4;
 }
+
 
