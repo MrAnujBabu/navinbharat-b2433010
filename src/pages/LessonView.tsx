@@ -483,14 +483,16 @@ const LessonView = () => {
     return () => { cancelled = true; };
   }, [currentLesson?.id, user]);
 
+  // Plain local: an optional-chain dep defeats React-compiler memoization.
+  const ratingLessonId = currentLesson?.id;
   const submitRating = useCallback(async () => {
-    if (!user || !currentLesson?.id || ratingValue === 0) return;
+    if (!user || !ratingLessonId || ratingValue === 0) return;
     setRatingSaving(true);
     try {
       const { error } = await supabase
         .from("lesson_ratings")
         .upsert(
-          { lesson_id: currentLesson.id, user_id: user.id, rating: ratingValue, comment: ratingComment.trim() || null },
+          { lesson_id: ratingLessonId, user_id: user.id, rating: ratingValue, comment: ratingComment.trim() || null },
           { onConflict: "lesson_id,user_id" }
         );
       if (error) throw error;
@@ -498,7 +500,7 @@ const LessonView = () => {
       toast.success(`Thanks! Aapne ${ratingValue} star diye.`);
       // refresh aggregate
       const { data: all } = await supabase
-        .from("lesson_ratings").select("rating").eq("lesson_id", currentLesson.id);
+        .from("lesson_ratings").select("rating").eq("lesson_id", ratingLessonId);
       if (all) {
         setRatingCount(all.length);
         setRatingAvg(all.length ? all.reduce((s: number, r: any) => s + r.rating, 0) / all.length : 0);
@@ -508,7 +510,7 @@ const LessonView = () => {
     } finally {
       setRatingSaving(false);
     }
-  }, [user, currentLesson?.id, ratingValue, ratingComment]);
+  }, [user, ratingLessonId, ratingValue, ratingComment]);
 
   // Ask-Doubt AI chat — extracted to `useLessonChat` (Phase 2 split).
   const {
