@@ -39,7 +39,7 @@ function inferKind(url: string): ResourceKind {
 }
 
 export async function openResource(opts: OpenResourceOptions): Promise<void> {
-  const { url, filename, download } = opts;
+  const { url, filename, download, preferSystemBrowser } = opts;
   const kind = opts.kind && opts.kind !== "auto" ? opts.kind : inferKind(url);
 
   if (download) {
@@ -48,11 +48,11 @@ export async function openResource(opts: OpenResourceOptions): Promise<void> {
     return;
   }
 
-  if (kind === "pdf") {
+  if (kind === "pdf" && !preferSystemBrowser) {
     const { embedUrl } = resolveEmbedUrl(url);
     await openExternal(embedUrl || url, { preferWebView: true });
     return;
   }
 
-  await openExternal(url);
+  await openExternal(url, preferSystemBrowser ? { preferWebView: false } : undefined);
 }
