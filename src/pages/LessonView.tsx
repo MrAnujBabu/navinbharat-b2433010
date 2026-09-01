@@ -1361,7 +1361,7 @@ const LessonView = () => {
     // Step 1: synchronous cache hydration (zero network).
     const cached = readBundleSync(courseId);
     if (cached) {
-      setCourse(cached.course);
+      setCourse(cached.course as CourseSummary | null);
       setChapters(cached.chapters as unknown as Chapter[]);
       setLessons(cached.lessons as unknown as Lesson[]);
       setHasPurchased(cached.hasPurchased);
@@ -1411,7 +1411,7 @@ const LessonView = () => {
         if (cancelled || signal.aborted || !aliveRef.current) return;
         if (bundleErr) throw bundleErr;
 
-        const b = (bundle ?? {}) as {
+        const b = (bundle ?? {}) as unknown as {
           course: CourseSummary | null;
           chapters: Chapter[];
           lessons: Partial<Lesson>[];
@@ -1426,7 +1426,7 @@ const LessonView = () => {
         setChapters(b.chapters || []);
 
         const mappedLessons: Lesson[] = (b.lessons || []).map((l) => ({
-          ...l,
+          ...(l as Lesson),
           video_url: l.video_url || '',
           class_pdf_url: l.class_pdf_url || null,
           overview: l.overview || null,
@@ -1485,7 +1485,7 @@ const LessonView = () => {
           // localStorage may be empty but Preferences has data).
           const lateCache = await readBundle(courseId);
           if (lateCache && !cancelled) {
-            setCourse(lateCache.course);
+            setCourse(lateCache.course as CourseSummary | null);
             setChapters(lateCache.chapters as unknown as Chapter[]);
             setLessons(lateCache.lessons as unknown as Lesson[]);
             setHasPurchased(lateCache.hasPurchased);
