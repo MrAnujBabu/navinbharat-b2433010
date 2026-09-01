@@ -60,6 +60,16 @@ export default function UniversalFileViewer(props: Props) {
   const [saving, setSaving] = useState(false);
   const [savingLib, setSavingLib] = useState(false);
 
+  // LINK kind: open externally and bounce back. Declared here (above every
+  // early return) so hook order stays identical on every render — the viewer
+  // can switch kinds in place when a record's fileType is corrected.
+  useEffect(() => {
+    if (kind !== "LINK") return;
+    void openExternal(url);
+    const t = setTimeout(onBack, 0);
+    return () => clearTimeout(t);
+  }, [kind, url, onBack]);
+
   if (kind === "PDF" && isNotion(url)) return (
     <div className="fixed inset-0 z-50 bg-background">
       <NotionPageRenderer url={url} title={title} onClose={onBack} />
@@ -69,6 +79,7 @@ export default function UniversalFileViewer(props: Props) {
   if (kind === "MARKDOWN") return (
     <MarkdownViewer url={url} title={title} filename={filename} onBack={onBack} hideDownload={hideDownload} />
   );
+
 
   const handleSave = async () => {
     if (saving) return;
