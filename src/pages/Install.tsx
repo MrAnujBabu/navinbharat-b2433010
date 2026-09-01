@@ -22,7 +22,7 @@ import appLogo from "../assets/branding/nb-mark.webp";
 import { toast } from "sonner";
 import { openResource } from "../lib/openResource";
 import { tapHaptic } from "../lib/native/haptics";
-import { Capacitor } from "@capacitor/core";
+import { isNative } from "@/lib/bridge";
 
 // Shared press-feedback class for the primary CTAs on this page. Matches the
 // landing-page press feel (150ms ease-out, no arbitrary duration values).
@@ -297,7 +297,7 @@ const Install = () => {
     // Native (Capacitor WebView): the WebView has no download manager wired
     // up, so a hidden iframe silently does nothing. Hand the URL to the
     // system browser, which delegates to Android's DownloadManager.
-    if (Capacitor.isNativePlatform()) {
+    if (isNative()) {
       await openResource({ url: apkUrl, kind: "link" });
       toast.success("Opening download — check your notifications.");
       return;

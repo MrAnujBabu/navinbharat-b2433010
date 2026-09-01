@@ -368,7 +368,7 @@ export default function NotionPageRenderer({ url, title, onClose, onReady, onDoc
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { try { window.open(activeUrl, "_blank", "noopener,noreferrer"); } catch {} }}
+              onClick={() => { void openResource({ url: activeUrl, kind: "link" }); }}
             >
               Open in Notion
             </Button>
@@ -533,7 +533,7 @@ export default function NotionPageRenderer({ url, title, onClose, onReady, onDoc
                       id && ((recordMap?.block?.[id] as any)?.value || (dashed && (recordMap?.block?.[dashed] as any)?.value))
                     );
                     if (!known) {
-                      try { window.open(next, "_blank", "noopener,noreferrer"); } catch {}
+                      void openResource({ url: next, kind: "link" });
                       return;
                     }
                     setStack((s) => [...s, next]);
