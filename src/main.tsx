@@ -34,7 +34,7 @@ try {
     const PREVIEW_NOISE_RE = /^Unknown message type:\s*(SET_SAFE_AREA|SET_KEYBOARD|SET_STATUS_BAR)\b/;
     for (const method of ["warn", "log", "info", "error"] as const) {
       const orig = (console[method] as (...a: unknown[]) => void).bind(console);
-      // eslint-disable-next-line no-console
+       
       console[method] = (...args: unknown[]) => {
         try {
           const first = typeof args[0] === "string" ? (args[0] as string) : "";

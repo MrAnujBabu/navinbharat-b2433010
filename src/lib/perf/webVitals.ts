@@ -22,7 +22,7 @@ let started = false;
 function report(name: string, value: number) {
   const v = Math.round(value * 100) / 100;
   if (import.meta.env.DEV) {
-    // eslint-disable-next-line no-console
+     
     console.log(`%c[perf] ${name}=${v}`, "color:#0ea5e9");
   }
   try {
@@ -91,7 +91,7 @@ export function initWebVitals() {
       if (e.duration > 50) {
         snapshot.longTasks += 1;
         if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
+           
           console.warn(`[perf] long task ${Math.round(e.duration)}ms`);
         }
       }

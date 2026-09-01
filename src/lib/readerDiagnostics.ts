@@ -75,7 +75,7 @@ export function traceReader(route: ReaderRoute, state: ReaderHealthState, event:
   }
 
   if (isDebugEnabled()) {
-    // eslint-disable-next-line no-console
+     
     console.info(`[reader:${route}] ${state} → ${event}`, entry.detail ?? {});
   }
 

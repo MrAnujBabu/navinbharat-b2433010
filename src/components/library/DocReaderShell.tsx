@@ -239,7 +239,6 @@ export default function DocReaderShell({
   useEffect(() => {
     scheduleHide();
     return () => { if (idleTimer.current) window.clearTimeout(idleTimer.current); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
 
   // Release orientation lock on unmount only if we actually locked it.

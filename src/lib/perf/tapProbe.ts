@@ -37,7 +37,7 @@ function publish(cycle: Cycle) {
   if (typeof window === "undefined") return;
   (window as unknown as { __nbTapProbe?: Cycle }).__nbTapProbe = cycle;
   // One concise line so logcat scrubs are easy: `adb logcat | grep nb-tap-probe`.
-  // eslint-disable-next-line no-console
+   
   console.info("[nb-tap-probe]", JSON.stringify(cycle.deltas), "total=", cycle.total?.toFixed(1));
 }
 

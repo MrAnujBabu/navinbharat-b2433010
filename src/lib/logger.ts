@@ -47,7 +47,7 @@ export const logger = {
     // single Sentry path. Suppressing the forwarder stops one failure from
     // opening two issues with different stacks.
     withConsoleForwardSuppressed(() => {
-      // eslint-disable-next-line no-console
+       
       console.error(`[error] ${message}`, error ?? "", context ?? "");
     });
     const err = error !== undefined ? toError(error) : new Error(message);
@@ -56,19 +56,19 @@ export const logger = {
 
 
   warn(message: string, context?: Context): void {
-    // eslint-disable-next-line no-console
+     
     console.warn(`[warn] ${message}`, context ?? "");
   },
 
   info(message: string, context?: Context): void {
     if (!isDev) return;
-    // eslint-disable-next-line no-console
+     
     console.info(`[info] ${message}`, context ?? "");
   },
 
   debug(message: string, context?: Context): void {
     if (!isDev) return;
-    // eslint-disable-next-line no-console
+     
     console.debug(`[debug] ${message}`, context ?? "");
   },
 };

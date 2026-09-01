@@ -61,7 +61,7 @@ export async function checkDeviceIntegrity(): Promise<void> {
     }
 
     // Real root indicator matched — grep-friendly log + Sentry + toast.
-    // eslint-disable-next-line no-console
+     
     console.warn("[security] suspicious device: %s", matched.join(","));
     reportError(new Error("device_integrity_suspicious"), {
       surface: "native.security",
