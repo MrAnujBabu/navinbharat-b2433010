@@ -1,10 +1,15 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, BookMarked, BookOpen, Download, Loader2, Maximize2, Minimize2, NotebookPen, X } from "lucide-react";
+import { ArrowLeft, BookMarked, BookOpen, Download, Loader2, Maximize2, Minimize2, NotebookPen, Search, X } from "lucide-react";
 
 import RotatePhoneIcon from "../icons/RotatePhoneIcon";
 import { Button } from "../ui/button";
 import PdfViewer, { type PdfViewerHandle } from "../video/PdfViewer";
 import ReaderOverlays from "../viewer/ReaderOverlays";
+import ReaderZoomControls from "./reader/ReaderZoomControls";
+
+/* Search is only parsed once the magnifier is tapped — it must never sit in
+   the chunk that has to load before the first page paints. */
+const ReaderSearchBar = lazyWithRetry(() => import("./reader/ReaderSearchBar")) as typeof import("./reader/ReaderSearchBar").default;
 
 /* The note composer (toolbar, markdown preview, Obsidian export) is only
    needed once the reader's note icon is tapped, so it stays out of the chunk
@@ -62,6 +67,10 @@ export default function DocReaderShell({
   /** True when the OS/browser refused the orientation lock and we rotate in CSS. */
   const [pseudoLandscape, setPseudoLandscape] = useState(false);
   const [autoActive, setAutoActive] = useState(false);
+  /** In-reader text search (canvas reader only). */
+  const [searchOpen, setSearchOpen] = useState(false);
+  /** Committed zoom factor reported by the canvas reader (1 = fit width). */
+  const [zoom, setZoom] = useState(1);
   const isMobile = useIsMobile();
   /** Rotation frame / fullscreen element, so the Notes sheet rotates with the page. */
   const portalHost = usePortalHost();
@@ -201,10 +210,23 @@ export default function DocReaderShell({
     return () => { document.body.removeAttribute("data-reader-rotated"); };
   }, [pseudoLandscape]);
 
+  /** Search must never auto-hide under the user's thumb mid-query. */
+  const searchOpenRef = useRef(false);
+  useEffect(() => { searchOpenRef.current = searchOpen; }, [searchOpen]);
   const scheduleHide = () => {
     if (idleTimer.current) window.clearTimeout(idleTimer.current);
-    idleTimer.current = window.setTimeout(() => setHeaderVisible(false), 2500);
+    idleTimer.current = window.setTimeout(() => {
+      if (searchOpenRef.current) return;
+      setHeaderVisible(false);
+    }, 2500);
   };
+
+  // Keep the toolbar pinned for as long as the search bar is open.
+  useEffect(() => {
+    if (!searchOpen) return;
+    setHeaderVisible(true);
+    if (idleTimer.current) window.clearTimeout(idleTimer.current);
+  }, [searchOpen]);
 
   // Telemetry + restore saved reading position.
   useEffect(() => {
@@ -330,7 +352,15 @@ export default function DocReaderShell({
   // the page underneath. Callers like Downloads / FolderView already register
   // their own sentinel, but StudyMaterialsList and LessonAttachmentsSheet do
   // not — owning one here gives every caller the overlay back contract.
-  useOverlayBackClose(true, onBack, "doc-reader");
+  // Hardware back closes the search bar first, then the reader itself.
+  const handleBack = useCallback(() => {
+    if (searchOpen) {
+      setSearchOpen(false);
+      return;
+    }
+    onBack();
+  }, [onBack, searchOpen]);
+  useOverlayBackClose(true, handleBack, "doc-reader");
 
   // While the reader is mounted, kill the body's safe-area gutters and force a
   // black page background. Otherwise the light theme's white body shows through
@@ -547,6 +577,21 @@ export default function DocReaderShell({
             </Button>
           )}
           <Button
+            variant={searchOpen ? "secondary" : "ghost"}
+            size="icon"
+            onClick={() => {
+              void selectionHaptic();
+              setSearchOpen((v) => !v);
+              setHeaderVisible(true);
+            }}
+            aria-label="Search in document"
+            aria-pressed={searchOpen}
+            title="Search in document"
+            className="h-11 w-11 active:scale-[0.94] transition-transform duration-150 ease-out"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+          <Button
             variant={readingMode ? "secondary" : "ghost"}
             size="icon"
             onClick={(e) => { void selectionHaptic(); toggleReadingMode(e); }}
@@ -601,7 +646,12 @@ export default function DocReaderShell({
             // hardcoded 48px was shorter than the real header on notched
             // devices, leaving a pale strip. The pseudo-landscape rotation now
             // lives on the frame (parent), never on this surface.
-            top: headerVisible && !landscape ? `${headerHeight}px` : "0px",
+            top:
+              searchOpen && !landscape
+                ? `${headerHeight + 56}px`
+                : headerVisible && !landscape
+                  ? `${headerHeight}px`
+                  : "0px",
           }}
         >
 
@@ -615,6 +665,7 @@ export default function DocReaderShell({
             initialPage={initialPage}
             onPageChange={handlePageChange}
             onReady={refreshRefs}
+            onZoomChange={setZoom}
             // Explicit tap forwarding: locally-opened (blob:/capacitor:) PDFs
             // render inside the canvas surface, whose taps were not reaching
             // the frame's onClick — so the header never toggled offline.
@@ -638,7 +689,27 @@ export default function DocReaderShell({
             setAutoActive(a);
             if (a) setHeaderVisible(false);
           }}
+          pinned={headerVisible && !readingMode}
         />
+
+        {/* One-handed zoom controls — pinch/double-tap still work as before. */}
+        <ReaderZoomControls
+          zoom={zoom}
+          visible={headerVisible && !readingMode && !searchOpen}
+          onZoomBy={(factor) => viewerRef.current?.zoomBy(factor)}
+          onFitWidth={() => viewerRef.current?.fitWidth()}
+        />
+
+        {searchOpen && (
+          <Suspense fallback={null}>
+            <ReaderSearchBar
+              topOffset={headerHeight}
+              onClose={() => setSearchOpen(false)}
+              onSearch={async (q) => (await viewerRef.current?.findPages(q)) ?? []}
+              onJump={(page) => viewerRef.current?.goToPage(page)}
+            />
+          </Suspense>
+        )}
 
 
         {/* Rotate FAB — lightweight SVG only, no black pill background. */}
