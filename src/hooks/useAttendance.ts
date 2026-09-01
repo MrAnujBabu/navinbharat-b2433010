@@ -45,7 +45,7 @@ export const useAttendance = (date?: string) => {
       const { data, error: dbError } = await query;
       if (dbError) throw dbError;
 
-      const formatted: Attendance[] = (data || []).map((a: any) => ({
+      const formatted: Attendance[] = (data || []).map((a: Record<string, unknown>) => ({
         id: a.id,
         studentId: a.student_id,
         date: a.date,
@@ -72,7 +72,7 @@ export const useAttendance = (date?: string) => {
 
       if (dbError) throw dbError;
 
-      return (data || []).map((a: any) => ({
+      return (data || []).map((a: Record<string, unknown>) => ({
         id: a.id,
         studentId: a.student_id,
         date: a.date,

@@ -56,7 +56,7 @@ export const useEnrollments = () => {
         try { return await resolveContentUrl(u); } catch { return null; }
       };
       const settled = await Promise.allSettled(
-        (data || []).map(async (e: any): Promise<EnrollmentWithCourse> => ({
+        (data || []).map(async (e: Record<string, unknown>): Promise<EnrollmentWithCourse> => ({
           id: e.id,
           userId: e.user_id,
           courseId: e.course_id,

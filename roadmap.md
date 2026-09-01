@@ -17,3 +17,4 @@
 - [ ] Re-measure reader memory on a 300-page scan on a real device after the APK build
 
 - [x] Clear preview typecheck errors (Error `cause` needs ES2022.Error lib — added to tsconfig.app.json)
+- [ ] Fix preview typecheck errors introduced during the lint/typing pass (ContentDrillDown, LibraryManager, PaymentsSection, useLessons)

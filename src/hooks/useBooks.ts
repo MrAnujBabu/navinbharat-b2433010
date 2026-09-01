@@ -109,7 +109,7 @@ export function useBooks() {
   const updateBook = async ({ id, formData, coverFile }: { id: string; formData: BookFormData; coverFile?: File }) => {
     try {
       setIsUpdating(true);
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         title: formData.title,
         author: formData.author,
         description: formData.description,

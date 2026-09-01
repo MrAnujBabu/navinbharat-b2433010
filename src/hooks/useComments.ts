@@ -47,7 +47,7 @@ export const useComments = (lessonId?: string) => {
 
       if (dbError) throw dbError;
 
-      const formatted: Comment[] = (data || []).map((c: any) => ({
+      const formatted: Comment[] = (data || []).map((c: Record<string, unknown>) => ({
         id: c.id,
         lessonId: c.lesson_id,
         userId: c.user_id ?? null,

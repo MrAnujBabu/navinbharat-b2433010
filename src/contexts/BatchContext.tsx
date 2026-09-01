@@ -50,14 +50,14 @@ export const BatchProvider = ({ children }: { children: ReactNode }) => {
         // Deduplicate by course id — same course may have multiple enrollment rows
         const seen = new Set<number>();
         const enrolledBatches: Batch[] = (data || [])
-          .map((e: any) => e.courses)
+          .map((e: { courses: unknown }) => e.courses)
           .filter(Boolean)
-          .filter((c: any) => {
+          .filter((c: Record<string, unknown> | null) => {
             if (seen.has(c.id)) return false;
             seen.add(c.id);
             return true;
           })
-          .map((c: any) => ({
+          .map((c: Record<string, unknown>) => ({
             id: c.id,
             title: c.title,
             grade: c.grade,

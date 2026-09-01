@@ -30,7 +30,7 @@ export interface CourseInput {
   thumbnailUrl?: string;
 }
 
-function mapCourse(c: any): Course {
+function mapCourse(c: Record<string, unknown>): Course {
   return {
     id: c.id,
     title: c.title,
@@ -159,7 +159,7 @@ export const useCourses = () => {
 
   const updateCourse = useCallback(async (id: number, input: Partial<CourseInput>): Promise<boolean> => {
     try {
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
       if (input.title !== undefined) updateData.title = input.title;
       if (input.description !== undefined) updateData.description = input.description;
       if (input.grade !== undefined) updateData.grade = input.grade;

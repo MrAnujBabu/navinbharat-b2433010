@@ -68,7 +68,7 @@ export const useCreateBanner = () => {
       qc.invalidateQueries({ queryKey: ["hero_banners"] });
       toast.success("Banner added successfully!");
     },
-    onError: (e: any) => toast.error("Failed to add banner: " + e.message),
+    onError: (e: unknown) => toast.error("Failed to add banner: " + (e instanceof Error ? e.message : String(e))),
   });
 };
 
@@ -86,7 +86,7 @@ export const useUpdateBanner = () => {
       qc.invalidateQueries({ queryKey: ["hero_banners"] });
       toast.success("Banner updated!");
     },
-    onError: (e: any) => toast.error("Update failed: " + e.message),
+    onError: (e: unknown) => toast.error("Update failed: " + (e instanceof Error ? e.message : String(e))),
   });
 };
 
@@ -104,7 +104,7 @@ export const useDeleteBanner = () => {
       qc.invalidateQueries({ queryKey: ["hero_banners"] });
       toast.success("Banner deleted.");
     },
-    onError: (e: any) => toast.error("Delete failed: " + e.message),
+    onError: (e: unknown) => toast.error("Delete failed: " + (e instanceof Error ? e.message : String(e))),
   });
 };
 
@@ -118,7 +118,7 @@ export const useReorderBanners = () => {
       await Promise.all(promises);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["hero_banners"] }),
-    onError: (e: any) => toast.error("Reorder failed: " + e.message),
+    onError: (e: unknown) => toast.error("Reorder failed: " + (e instanceof Error ? e.message : String(e))),
   });
 };
 

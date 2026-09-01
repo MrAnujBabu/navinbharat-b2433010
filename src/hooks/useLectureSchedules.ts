@@ -47,7 +47,7 @@ export const useLectureSchedules = () => {
       if (error) throw error;
 
       setSchedules(
-        (data || []).map((s: any) => ({
+        (data || []).map((s: Record<string, unknown>) => ({
           id: s.id,
           courseId: s.course_id,
           chapterId: s.chapter_id,
