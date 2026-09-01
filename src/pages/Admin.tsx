@@ -3,6 +3,11 @@ import { reportError } from "@/lib/sentry";
 import { getErrorMessage } from "@/lib/errorMessage";
 import type { DbCourse, DbProfile } from "@/types/supabase";
 import type { Database } from "@/integrations/supabase/types";
+
+type DbPaymentRequestRow = Database['public']['Tables']['payment_requests']['Row'];
+type DbRazorpayPaymentRow = Database['public']['Tables']['razorpay_payments']['Row'];
+type PaymentRequestRow = DbPaymentRequestRow & { courses: { title: string | null } | null; profiles: DbProfile | null };
+type RazorpayPaymentRow = DbRazorpayPaymentRow & { profiles: DbProfile | null };
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { openResource } from "@/lib/openResource";
 import { supabase } from "../integrations/supabase/client";
@@ -93,8 +98,8 @@ const Admin = () => {
 
 
   // -- DATA STATES --
-  const [payments, setPayments] = useState<any[]>([]);
-  const [razorpayPayments, setRazorpayPayments] = useState<any[]>([]);
+  const [payments, setPayments] = useState<PaymentRequestRow[]>([]);
+  const [razorpayPayments, setRazorpayPayments] = useState<RazorpayPaymentRow[]>([]);
   const [coursesList, setCoursesList] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(false);
@@ -317,7 +322,7 @@ const Admin = () => {
   // real enforcer — this just gives the admin a clear UX warning). Enroll
   // FIRST, then mark approved, so we never end up with status=approved but
   // no enrollment row if the second write fails. Idempotent.
-  const handleApprovePayment = async (paymentRequest: any) => {
+  const handleApprovePayment = async (paymentRequest: PaymentRequestRow) => {
     if (paymentRequest.status === 'approved') {
       toast.info("Already approved.");
       return;
@@ -385,12 +390,12 @@ const Admin = () => {
   };
 
   // --- REFUND CONFIRMATION DIALOG STATE ---
-  const [refundConfirmPayment, setRefundConfirmPayment] = useState<any>(null);
+  const [refundConfirmPayment, setRefundConfirmPayment] = useState<RazorpayPaymentRow | null>(null);
   const [refundConfirmText, setRefundConfirmText] = useState("");
   // Blank = full refund (historical behaviour). Rupees, converted to paise.
   const [refundAmountText, setRefundAmountText] = useState("");
 
-  const openRefundDialog = (payment: any) => {
+  const openRefundDialog = (payment: RazorpayPaymentRow) => {
     setRefundConfirmPayment(payment);
     setRefundConfirmText("");
     setRefundAmountText("");

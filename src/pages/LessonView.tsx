@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo, Suspense } from "react";
 import { mark, measure } from "@/lib/perf/marks";
+import { getErrorMessage } from "@/lib/errorMessage";
 import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import { Button } from "../components/ui/button";
