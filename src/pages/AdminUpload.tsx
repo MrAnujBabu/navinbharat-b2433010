@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { reportError } from "@/lib/sentry";
+import { getErrorMessage } from "@/lib/errorMessage";
+import type { DbChapter, DbCourse, DbLesson } from "@/types/supabase";
+import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import { Button } from "../components/ui/button";
@@ -74,12 +77,12 @@ const SortableItem = ({ id, children }: { id: string; children: (handle: React.R
 const AdminUpload = () => {
   const confirmAction = useConfirm();
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<(User & { full_name?: string | null }) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Breadcrumb drill-down state
-  const [courses, setCourses] = useState<any[]>([]);
-  const [chapters, setChapters] = useState<any[]>([]);
+  const [courses, setCourses] = useState<DbCourse[]>([]);
+  const [chapters, setChapters] = useState<DbChapter[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const [chaptersLoading, setChaptersLoading] = useState(false);
@@ -108,7 +111,7 @@ const AdminUpload = () => {
   const [savingChapterEdit, setSavingChapterEdit] = useState(false);
 
   // Sub-chapters for current chapter
-  const [subChapters, setSubChapters] = useState<any[]>([]);
+  const [subChapters, setSubChapters] = useState<DbChapter[]>([]);
 
   // Upload form states
   const [uploadType, setUploadType] = useState<UploadType>("VIDEO");
@@ -142,7 +145,7 @@ const AdminUpload = () => {
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
 
   // Edit lesson state
-  const [editingLesson, setEditingLesson] = useState<any | null>(null);
+  const [editingLesson, setEditingLesson] = useState<DbLesson | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editVideoUrl, setEditVideoUrl] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -158,7 +161,7 @@ const AdminUpload = () => {
   const [editUploadingPdfs, setEditUploadingPdfs] = useState(false);
 
   // Recent lessons for selected chapter
-  const [lessons, setLessons] = useState<any[]>([]);
+  const [lessons, setLessons] = useState<DbLesson[]>([]);
 
   const selectedCourse = courses.find(c => c.id === selectedCourseId);
   const selectedChapter = chapters.find(c => c.id === selectedChapterId) ||
@@ -332,8 +335,8 @@ const AdminUpload = () => {
       const { data } = await supabase.from('chapters').select('*')
         .eq('course_id', selectedCourseId).is('parent_id', null).order('position', { ascending: true });
       setChapters(data || []);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     } finally {
       setCreatingChapter(false);
     }
@@ -360,8 +363,8 @@ const AdminUpload = () => {
       const { data } = await supabase.from('chapters').select('*')
         .eq('parent_id', selectedChapterId).order('position', { ascending: true });
       setSubChapters(data || []);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     } finally {
       setCreatingSubfolder(false);
     }
@@ -417,8 +420,8 @@ const AdminUpload = () => {
       if (signErr) throw signErr;
       setVideoUrl(data.signedUrl);
       toast.success("Video uploaded to storage!");
-    } catch (err: any) {
-      toast.error("Video upload failed: " + err.message);
+    } catch (err: unknown) {
+      toast.error("Video upload failed: " + getErrorMessage(err));
       setVideoFile(null);
     } finally {
       setVideoFileUploading(false);
@@ -446,8 +449,8 @@ const AdminUpload = () => {
       setThumbnailUrl(`storage://content/${fileName}`);
 
       toast.success("Thumbnail uploaded!");
-    } catch (err: any) {
-      toast.error("Thumbnail upload failed: " + err.message);
+    } catch (err: unknown) {
+      toast.error("Thumbnail upload failed: " + getErrorMessage(err));
       setThumbnailFile(null);
     } finally {
       setThumbnailFileUploading(false);
@@ -575,8 +578,8 @@ const AdminUpload = () => {
       const { data } = await supabase.from('lessons').select('*')
         .eq('chapter_id', selectedChapterId).order('position', { ascending: true });
       setLessons(data || []);
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     } finally {
       setIsUploading(false);
       setUploadingAttachments(false);
@@ -586,7 +589,7 @@ const AdminUpload = () => {
   const handleDeleteLesson = async (id: string) => {
     if (!(await confirmAction({ title: "Delete this lesson?", variant: "destructive" }))) return;
     const { error } = await supabase.from('lessons').delete().eq('id', id);
-    if (error) { toast.error(error.message); }
+    if (error) { toast.error(getErrorMessage(error)); }
     else {
       toast.success("Lesson deleted");
       setLessons(prev => prev.filter(l => l.id !== id));
@@ -594,7 +597,7 @@ const AdminUpload = () => {
     }
   };
 
-  const handleOpenEdit = (lesson: any) => {
+  const handleOpenEdit = (lesson: DbLesson) => {
     setEditingLesson(lesson);
     setEditTitle(lesson.title || "");
     setEditVideoUrl(lesson.video_url || "");
@@ -625,8 +628,8 @@ const AdminUpload = () => {
         : l
       ));
       setEditingLesson(null);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     } finally {
       setIsSavingEdit(false);
     }
@@ -660,13 +663,13 @@ const AdminUpload = () => {
           .eq('parent_id', selectedChapterId).order('position', { ascending: true });
         setSubChapters(refreshedSubs || []);
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     }
   };
 
   // ─── Chapter edit/rename handler ─────────────────────────────────────────
-  const handleOpenChapterEdit = (ch: any) => {
+  const handleOpenChapterEdit = (ch: DbChapter) => {
     setEditingChapterId(ch.id);
     setEditChapterTitle(ch.title || "");
     setEditChapterCode(ch.code || "");
@@ -685,15 +688,15 @@ const AdminUpload = () => {
       if (error) throw error;
       toast.success("Chapter updated!");
       // Refresh chapters
-      const updateList = (list: any[]) => list.map(c => c.id === editingChapterId
+      const updateList = (list: DbChapter[]) => list.map(c => c.id === editingChapterId
         ? { ...c, title: editChapterTitle.trim(), code: editChapterCode.trim(), thumbnail_url: editChapterThumbnailUrl.trim() || null }
         : c
       );
       setChapters(updateList(chapters));
       setSubChapters(updateList(subChapters));
       setEditingChapterId(null);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     } finally {
       setSavingChapterEdit(false);
     }

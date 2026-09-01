@@ -1,5 +1,24 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { reportError } from "@/lib/sentry";
+import { getErrorMessage } from "@/lib/errorMessage";
+import type { DbCourse, DbProfile } from "@/types/supabase";
+import type { Database } from "@/integrations/supabase/types";
+
+type DbPaymentRequestRow = Database['public']['Tables']['payment_requests']['Row'];
+type DbRazorpayPaymentRow = Database['public']['Tables']['razorpay_payments']['Row'];
+type PaymentRequestRow = DbPaymentRequestRow & { courses: { title: string | null } | null; profiles: DbProfile | null };
+type RazorpayPaymentRow = DbRazorpayPaymentRow & { courses: { title: string | null } | null; profiles: DbProfile | null };
+type UnifiedPayment = (PaymentRequestRow | RazorpayPaymentRow) & {
+  _method: 'upi' | 'razorpay';
+  _key: string;
+  _displayName: string;
+  _email: string;
+  _course: string;
+  _amount: number | null;
+  _status: string | null;
+  _date: string | null;
+  _ref: string;
+};
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { openResource } from "@/lib/openResource";
 import { supabase } from "../integrations/supabase/client";
@@ -90,8 +109,8 @@ const Admin = () => {
 
 
   // -- DATA STATES --
-  const [payments, setPayments] = useState<any[]>([]);
-  const [razorpayPayments, setRazorpayPayments] = useState<any[]>([]);
+  const [payments, setPayments] = useState<PaymentRequestRow[]>([]);
+  const [razorpayPayments, setRazorpayPayments] = useState<RazorpayPaymentRow[]>([]);
   const [coursesList, setCoursesList] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(false);
@@ -160,9 +179,9 @@ const Admin = () => {
       if (coursesData) setCoursesList(coursesData);
 
       const { data: profilesData } = await supabase.from('profiles').select('*');
-      const profileMap = new Map<string, any>((profilesData || []).map((p: any) => [p.id, p]));
-      const withProfile = (rows: any[] | null) =>
-        (rows || []).map((r: any) => ({ ...r, profiles: profileMap.get(r.user_id) ?? null }));
+      const profileMap = new Map<string, DbProfile>((profilesData || []).map((p) => [p.id, p]));
+      const withProfile = <T extends { user_id: string | null }>(rows: T[] | null) =>
+        (rows || []).map((r) => ({ ...r, profiles: profileMap.get(r.user_id) ?? null }));
 
       // profiles is not FK-linked to payment tables — join client-side.
       const { data: payData } = await supabase
@@ -232,8 +251,8 @@ const Admin = () => {
       if (error) throw error;
       setUsersList(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
       toast.success("Role updated successfully");
-    } catch (err: any) {
-      toast.error("Failed to update role: " + (err?.message || "Unknown error"));
+    } catch (err: unknown) {
+      toast.error("Failed to update role: " + getErrorMessage(err, "Unknown error"));
     } finally {
       setRoleChanging(prev => ({ ...prev, [userId]: false }));
     }
@@ -246,21 +265,23 @@ const Admin = () => {
       _displayName: p.profiles?.full_name || p.sender_name || p.user_name || 'Unknown',
       _email: p.profiles?.email || '', _course: p.courses?.title || 'Unknown Course',
       _amount: p.amount, _status: p.status, _date: p.created_at,
+      _ref: p.transaction_id || '',
     }));
     const rzp = razorpayPayments.map(p => ({
       ...p, _method: 'razorpay' as const, _key: `rzp-${p.id}`,
       _displayName: p.profiles?.full_name || 'Online Payment',
       _email: p.profiles?.email || '', _course: p.courses?.title || 'Unknown Course',
       _amount: p.amount, _status: p.status, _date: p.created_at,
+      _ref: p.razorpay_payment_id || '',
     }));
-    return [...manual, ...rzp].sort((a, b) => new Date(b._date).getTime() - new Date(a._date).getTime());
+    return [...manual, ...rzp].sort((a, b) => new Date(b._date ?? 0).getTime() - new Date(a._date ?? 0).getTime());
   }, [payments, razorpayPayments]);
 
   const filteredPayments = useMemo(() => {
     const s = paymentSearch.toLowerCase();
     return allPaymentsUnified.filter(p => {
       const matchesSearch = !s || p._displayName.toLowerCase().includes(s) || p._email.toLowerCase().includes(s) ||
-        p._course.toLowerCase().includes(s) || (p.transaction_id?.toLowerCase().includes(s)) || (p.razorpay_payment_id?.toLowerCase().includes(s));
+        p._course.toLowerCase().includes(s) || p._ref.toLowerCase().includes(s);
       const matchesStatus = paymentStatusFilter === "all" || p._status === paymentStatusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -286,7 +307,7 @@ const Admin = () => {
   [usersList, teacherSearch]);
 
   // --- EXPORT ---
-  const exportToCSV = (data: any[], filename: string) => {
+  const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
     if (data.length === 0) { toast.error("No data to export"); return; }
     const headers = Object.keys(data[0]).filter(k => !k.includes('id') && typeof data[0][k] !== 'object');
     const csvContent = [
@@ -314,7 +335,7 @@ const Admin = () => {
   // real enforcer — this just gives the admin a clear UX warning). Enroll
   // FIRST, then mark approved, so we never end up with status=approved but
   // no enrollment row if the second write fails. Idempotent.
-  const handleApprovePayment = async (paymentRequest: any) => {
+  const handleApprovePayment = async (paymentRequest: PaymentRequestRow) => {
     if (paymentRequest.status === 'approved') {
       toast.info("Already approved.");
       return;
@@ -360,8 +381,8 @@ const Admin = () => {
 
       toast.success("Payment Approved & Course Unlocked!");
       fetchDashboardData();
-    } catch (error: any) {
-      toast.error("Approval Error: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Approval Error: " + getErrorMessage(error));
     }
   };
 
@@ -376,18 +397,18 @@ const Admin = () => {
       if (error) throw error;
       toast.error("Payment request rejected.");
       fetchDashboardData();
-    } catch (error: any) {
-      toast.error("Error rejecting: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Error rejecting: " + getErrorMessage(error));
     }
   };
 
   // --- REFUND CONFIRMATION DIALOG STATE ---
-  const [refundConfirmPayment, setRefundConfirmPayment] = useState<any>(null);
+  const [refundConfirmPayment, setRefundConfirmPayment] = useState<UnifiedPayment | null>(null);
   const [refundConfirmText, setRefundConfirmText] = useState("");
   // Blank = full refund (historical behaviour). Rupees, converted to paise.
   const [refundAmountText, setRefundAmountText] = useState("");
 
-  const openRefundDialog = (payment: any) => {
+  const openRefundDialog = (payment: UnifiedPayment) => {
     setRefundConfirmPayment(payment);
     setRefundConfirmText("");
     setRefundAmountText("");
@@ -396,6 +417,10 @@ const Admin = () => {
   const handleInitiateRefund = async () => {
     const payment = refundConfirmPayment;
     if (!payment) return;
+    if (!("razorpay_payment_id" in payment)) {
+      toast.error("Only online (Razorpay) payments can be refunded automatically.");
+      return;
+    }
     const trimmed = refundAmountText.trim();
     const rupees = trimmed === "" ? null : Number(trimmed);
     if (rupees !== null && (!Number.isFinite(rupees) || rupees <= 0)) {
@@ -415,7 +440,7 @@ const Admin = () => {
           ...(rupees === null ? {} : { amount: Math.round(rupees * 100) }),
         },
       });
-      if (error) throw new Error(error.message || "Refund failed");
+      if (error) throw new Error(getErrorMessage(error) || "Refund failed");
       if (!data?.success) throw new Error(data?.error || 'Refund failed');
       toast.success(
         data?.is_full === false
@@ -423,8 +448,8 @@ const Admin = () => {
           : 'Refund initiated! Course access revoked.'
       );
       fetchDashboardData();
-    } catch (err: any) {
-      toast.error('Refund failed: ' + (err?.message || 'Unknown error'));
+    } catch (err: unknown) {
+      toast.error('Refund failed: ' + getErrorMessage(err, 'Unknown error'));
     } finally {
       setRefundingPayment(null);
     }
@@ -463,8 +488,8 @@ const Admin = () => {
       setCourseThumbnailUrl("");
       setCourseThumbnailMode("file");
       fetchDashboardData();
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     } finally {
       setIsCreatingCourse(false);
     }
@@ -473,11 +498,11 @@ const Admin = () => {
   const handleDeleteCourse = async (id: number) => {
     if (!(await confirmAction({ title: "Delete course? This will remove all lessons too!", variant: "destructive" }))) return;
     const { error } = await supabase.from('courses').delete().eq('id', id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(getErrorMessage(error));
     else { toast.success("Course deleted"); fetchDashboardData(); }
   };
 
-  const handleEditCourse = (course: any) => {
+  const handleEditCourse = (course: DbCourse) => {
     setEditingCourseId(course.id);
     setEditCourseData({ title: course.title || "", description: course.description || "", price: String(course.price || ""), grade: course.grade || "", startDate: course.start_date || "", endDate: course.end_date || "" });
     setEditThumbnailFile(null);
@@ -502,10 +527,10 @@ const Admin = () => {
       thumbnailUrl = `storage://content/thumbnails/${fileName}`;
 
     }
-    const updateData: any = { title: editCourseData.title, description: editCourseData.description, price: parseFloat(editCourseData.price) || 0, grade: editCourseData.grade, start_date: editCourseData.startDate || null, end_date: editCourseData.endDate || null };
+    const updateData: Database['public']['Tables']['courses']['Update'] = { title: editCourseData.title, description: editCourseData.description, price: parseFloat(editCourseData.price) || 0, grade: editCourseData.grade, start_date: editCourseData.startDate || null, end_date: editCourseData.endDate || null };
     if (thumbnailUrl) { updateData.image_url = thumbnailUrl; updateData.thumbnail_url = thumbnailUrl; }
     const { error } = await supabase.from('courses').update(updateData).eq('id', editingCourseId);
-    if (error) toast.error(error.message);
+    if (error) toast.error(getErrorMessage(error));
     else { toast.success("Course updated!"); setEditingCourseId(null); setEditThumbnailFile(null); setEditThumbnailUrl(""); setEditThumbnailMode("file"); fetchDashboardData(); }
   };
 
@@ -710,10 +735,10 @@ const Admin = () => {
               const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
               const completedRzp = razorpayPayments.filter(p => p.status === 'completed');
               const approvedManual = payments.filter(p => p.status === 'approved');
-              const todayRzp = completedRzp.filter(p => p.created_at?.startsWith(todayStr)).reduce((s: number, p: any) => s + (p.amount || 0), 0);
-              const todayManual = approvedManual.filter(p => p.created_at?.startsWith(todayStr)).reduce((s: number, p: any) => s + (p.amount || 0), 0);
-              const monthRzp = completedRzp.filter(p => p.created_at >= monthStart).reduce((s: number, p: any) => s + (p.amount || 0), 0);
-              const monthManual = approvedManual.filter(p => p.created_at >= monthStart).reduce((s: number, p: any) => s + (p.amount || 0), 0);
+              const todayRzp = completedRzp.filter(p => p.created_at?.startsWith(todayStr)).reduce((s: number, p: { amount: number | null }) => s + (p.amount || 0), 0);
+              const todayManual = approvedManual.filter(p => p.created_at?.startsWith(todayStr)).reduce((s: number, p: { amount: number | null }) => s + (p.amount || 0), 0);
+              const monthRzp = completedRzp.filter(p => p.created_at >= monthStart).reduce((s: number, p: { amount: number | null }) => s + (p.amount || 0), 0);
+              const monthManual = approvedManual.filter(p => p.created_at >= monthStart).reduce((s: number, p: { amount: number | null }) => s + (p.amount || 0), 0);
               return (
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
                   <Card className="p-3 text-center">
@@ -733,12 +758,12 @@ const Admin = () => {
                   </Card>
                   <Card className="p-3 text-center">
                     <p className="text-xs text-muted-foreground">Manual UPI</p>
-                    <p className="text-xl font-bold">₹{approvedManual.reduce((s: number, p: any) => s + (p.amount || 0), 0).toLocaleString()}</p>
+                    <p className="text-xl font-bold">₹{approvedManual.reduce((s: number, p: { amount: number | null }) => s + (p.amount || 0), 0).toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground">{approvedManual.length} approved</p>
                   </Card>
                   <Card className="p-3 text-center">
                     <p className="text-xs text-muted-foreground">Razorpay</p>
-                    <p className="text-xl font-bold">₹{completedRzp.reduce((s: number, p: any) => s + (p.amount || 0), 0).toLocaleString()}</p>
+                    <p className="text-xl font-bold">₹{completedRzp.reduce((s: number, p: { amount: number | null }) => s + (p.amount || 0), 0).toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground">{completedRzp.length} completed</p>
                   </Card>
                 </div>
@@ -755,7 +780,7 @@ const Admin = () => {
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input placeholder="Search name, UTR, course..." value={paymentSearch} onChange={(e) => setPaymentSearch(e.target.value)} className="pl-9" />
                     </div>
-                    <Select value={paymentStatusFilter} onValueChange={(v: any) => setPaymentStatusFilter(v)}>
+                    <Select value={paymentStatusFilter} onValueChange={(v) => setPaymentStatusFilter(v as typeof paymentStatusFilter)}>
                       <SelectTrigger className="w-[130px]"><Filter className="h-4 w-4 mr-2" /><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Status</SelectItem>
@@ -769,7 +794,7 @@ const Admin = () => {
                     <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredPayments.map(p => ({
                       method: p._method === 'razorpay' ? 'Razorpay' : 'UPI Manual',
                       name: p._displayName, course: p._course, amount: p._amount, status: p._status, date: p._date,
-                      ref: p.transaction_id || p.razorpay_payment_id || '',
+                      ref: p._ref,
                     })), 'payments')}>
                       <Download className="h-4 w-4 mr-1" /> Export
                     </Button>
@@ -877,7 +902,7 @@ const Admin = () => {
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input placeholder="Search by name, email, phone..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-9 bg-card" />
                     </div>
-                    <Select value={userRoleFilter} onValueChange={(v: any) => setUserRoleFilter(v)}>
+                    <Select value={userRoleFilter} onValueChange={(v) => setUserRoleFilter(v as typeof userRoleFilter)}>
                       <SelectTrigger className="w-[130px] bg-card"><Filter className="h-4 w-4 mr-2" /><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Roles</SelectItem>

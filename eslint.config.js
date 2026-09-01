@@ -5,7 +5,18 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "android", "ios", "boilerplate", "node_modules"] },
+  {
+    ignores: [
+      "dist",
+      "android",
+      "ios",
+      "boilerplate",
+      "node_modules",
+      // Vendored pdf.js bundle: ships upstream eslint directives for plugins
+      // this project does not install, so every line reports "rule not found".
+      "public/pdfjs/**",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
