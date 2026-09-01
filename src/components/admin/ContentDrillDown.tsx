@@ -33,8 +33,33 @@ import {
   ReorderList, SortableTableRow, SortableCard, DragHandle, ReorderArrows,
 } from "./ReorderControls";
 
+interface CourseListItem {
+  id: number;
+  title: string;
+  [key: string]: unknown;
+}
+
+interface ChapterRow {
+  id: string;
+  title: string;
+  code?: string | null;
+  icon_url?: string | null;
+  position?: number;
+  parent_id?: string | null;
+  [key: string]: unknown;
+}
+
+interface LessonRow {
+  id: string;
+  title: string;
+  lecture_type?: string;
+  is_locked?: boolean;
+  video_url?: string | null;
+  [key: string]: unknown;
+}
+
 interface ContentDrillDownProps {
-  coursesList: any[];
+  coursesList: CourseListItem[];
   onNavigateToUpload: (courseId: string, chapterId: string) => void;
   onRefresh: () => void;
 }
@@ -46,9 +71,9 @@ const ContentDrillDown = ({ coursesList, onNavigateToUpload, onRefresh }: Conten
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const [selectedSubChapterId, setSelectedSubChapterId] = useState<string | null>(null);
-  const [chapters, setChapters] = useState<any[]>([]);
-  const [subChapters, setSubChapters] = useState<any[]>([]);
-  const [lessons, setLessons] = useState<any[]>([]);
+  const [chapters, setChapters] = useState<ChapterRow[]>([]);
+  const [subChapters, setSubChapters] = useState<ChapterRow[]>([]);
+  const [lessons, setLessons] = useState<LessonRow[]>([]);
   const [lessonSearch, setLessonSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<ContentTypeFilter>("all");
   const [loading, setLoading] = useState(false);
@@ -84,7 +109,7 @@ const ContentDrillDown = ({ coursesList, onNavigateToUpload, onRefresh }: Conten
     description: "", position: "0", is_locked: false, thumbnail_url: "",
   });
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
-  const [editChaptersList, setEditChaptersList] = useState<any[]>([]);
+  const [editChaptersList, setEditChaptersList] = useState<ChapterRow[]>([]);
 
   // Inline upload dialog state
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -271,11 +296,11 @@ const ContentDrillDown = ({ coursesList, onNavigateToUpload, onRefresh }: Conten
   // unfiltered — otherwise reordering a filtered subset would scramble hidden rows.
   const reorderEnabled = lessonSearch.trim() === "" && typeFilter === "all";
 
-  const handleReorderChapter = (id: string, direction: "up" | "down", list: any[], isSubChapter: boolean) => {
+  const handleReorderChapter = (id: string, direction: "up" | "down", list: ChapterRow[], isSubChapter: boolean) => {
     void chapterReorder.moveByStep(list, id, direction, isSubChapter ? setSubChapters : setChapters);
   };
 
-  const handleDragChapter = (from: number, to: number, list: any[], isSubChapter: boolean) => {
+  const handleDragChapter = (from: number, to: number, list: ChapterRow[], isSubChapter: boolean) => {
     void chapterReorder.moveByIndex(list, from, to, isSubChapter ? setSubChapters : setChapters);
   };
 
@@ -1287,7 +1312,7 @@ const ContentDrillDown = ({ coursesList, onNavigateToUpload, onRefresh }: Conten
             {/* Content Type */}
             <div className="grid grid-cols-5 gap-1.5">
               {([["video", "Lecture", Video], ["pdf", "PDF", FileText], ["dpp", "DPP", FileText], ["notes", "Notes", BookOpen], ["test", "Test", ClipboardCheck]] as const).map(([type, label, Icon]) => (
-                <Button key={type} size="sm" variant={uploadType === type ? "default" : "outline"} onClick={() => { setUploadType(type as any); if (type === "video" || type === "test") setUploadMode("link"); }} className="text-xs px-2">
+                <Button key={type} size="sm" variant={uploadType === type ? "default" : "outline"} onClick={() => { setUploadType(type as typeof uploadType); if (type === "video" || type === "test") setUploadMode("link"); }} className="text-xs px-2">
                   <Icon className="h-3 w-3 mr-1" /> {label}
                 </Button>
               ))}
