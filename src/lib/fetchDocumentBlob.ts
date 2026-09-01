@@ -49,7 +49,10 @@ export function documentSourceCandidates(rawUrl: string): string[] {
   };
 
   if (isGoogleDrive(url)) push(googleDrivePdfProxyUrl(url));
-  push(renderablePdfUrl(url));
+  const renderable = renderablePdfUrl(url);
+  // Only push the renderable rewrite when it actually rewrites something —
+  // otherwise it is just the direct URL, which must stay last (CORS-prone).
+  if (renderable && renderable !== url) push(renderable);
   // Any other cross-origin host: relay through pdf-proxy. The proxy keeps its
   // own server-side allow-list (admin-managed `trusted_hosts` + the static
   // baseline), so offering it as a candidate can't widen what we can reach —

@@ -1082,14 +1082,18 @@ export async function refreshDynamicPdfHosts(): Promise<void> {
   if (dynamicHostsInFlight) return dynamicHostsInFlight;
   dynamicHostsInFlight = (async () => {
     try {
+      // NOTE: do NOT filter with .in("category", ["pdf", "frame"]) — on
+      // databases where the 'pdf' enum value has not been added yet Postgres
+      // rejects the whole query (22P02) and the allowlist comes back empty.
+      // Read categories as text and filter in JS instead.
       const { data, error } = await adminClient
         .from("trusted_hosts")
-        .select("host")
-        .in("category", ["pdf", "frame"])
+        .select("host, category")
         .eq("enabled", true);
       if (error) throw error;
       dynamicHosts = new Set(
         (data ?? [])
+          .filter((r) => ["pdf", "frame"].includes(String((r as { category?: string }).category ?? "")))
           .map((r) => String((r as { host?: string }).host ?? "").trim().toLowerCase())
           .filter(Boolean),
       );
@@ -1171,11 +1175,25 @@ async function fetchRemoteFile(
         { status: 502, headers: { "Content-Type": "application/json" } },
       );
     }
-    const res = await fetch(currentUrl, {
-      headers,
-      redirect: "manual",
-      signal: timeoutSignal(timeoutMs),
-    });
+    // Some upstreams (ncert.nic.in in particular) reset the TCP connection on
+    // the first attempt roughly one time in four. Retry transport-level
+    // failures a couple of times with a short backoff before giving up.
+    let res: Response;
+    let attempt = 0;
+    for (;;) {
+      try {
+        res = await fetch(currentUrl, {
+          headers,
+          redirect: "manual",
+          signal: timeoutSignal(timeoutMs),
+        });
+        break;
+      } catch (err) {
+        attempt++;
+        if (attempt > 2) throw err;
+        await new Promise((r) => setTimeout(r, 250 * attempt));
+      }
+    }
     if (res.status < 300 || res.status >= 400) return res;
     const loc = res.headers.get("location");
     // Drain redirect body to avoid Deno resource leak warnings.
