@@ -11,6 +11,7 @@
  *      in-app reader, so they MUST render the FAB. Google Docs stays hidden.
  */
 import { describe, it, expect, vi } from "vitest";
+import * as ReactForMock from "react";
 import { render, screen } from "@testing-library/react";
 import {
   isGoogleDrive,
