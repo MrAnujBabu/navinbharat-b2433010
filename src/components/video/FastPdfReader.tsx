@@ -51,7 +51,19 @@ if (typeof window !== "undefined") {
 export type FastPdfReaderHandle = {
   getScrollEl: () => HTMLElement | null;
   getIframeEl: () => HTMLIFrameElement | null;
+  /** Current committed zoom factor (1 = fit width). */
+  getZoom: () => number;
+  /** Multiply the current zoom, anchored on the viewport centre. */
+  zoomBy: (factor: number) => void;
+  /** Reset to fit-width (zoom = 1). */
+  fitWidth: () => void;
+  getNumPages: () => number;
+  /** Scroll a 1-based page into view. */
+  goToPage: (page: number) => void;
+  /** Pages (1-based, ascending) whose text contains `query`. */
+  findPages: (query: string) => Promise<number[]>;
 };
+
 
 /** Per-URL cache of the probed total file size (bytes). */
 const pdfTotalBytesCache = new Map<string, number>();
