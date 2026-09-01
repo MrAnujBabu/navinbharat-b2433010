@@ -47,7 +47,7 @@ export const useLectureSchedules = () => {
       if (error) throw error;
 
       interface ScheduleQueryRow {
-        id: string; course_id: string | null; chapter_id: string | null;
+        id: string; course_id: number | null; chapter_id: string | null;
         title: string; description: string | null;
         scheduled_date: string; scheduled_time: string;
         duration_minutes: number; meeting_link: string | null;
