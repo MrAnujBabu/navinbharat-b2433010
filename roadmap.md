@@ -12,3 +12,6 @@
 - [ ] Sentry noise PR: drop transient network + empty `{}` events; reject non-`%PDF` bytes before offline save
 - [x] Live signed-in verification of the offline reader (header toggle, back contract, zero console errors) → `docs/observer/2026-08-31-final-polish-audit.md`
 - [x] Crash shield: wrap every `DocReaderShell` mount (study materials, lesson attachments) in `ReaderErrorBoundary`
+- [x] Deep PDF delivery perf pass + ELO scoring (962/1000) → `docs/perf/PDF-PERF-2026-09-01.md`
+- [x] Fix unbounded canvas retention on long PDFs (`shouldReleaseDistantPages` page-count rule + test)
+- [ ] Re-measure reader memory on a 300-page scan on a real device after the APK build
