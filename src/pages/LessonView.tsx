@@ -271,9 +271,9 @@ const LessonView = () => {
           ta.setSelectionRange(ta.value.length, ta.value.length);
         }
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Smart Notes link import failed", err);
-      toast.error(err?.message || "Link import failed");
+      toast.errorgetErrorMessage(err, "Link import failed");
       throw err;
     } finally {
       setTimeout(() => setSmartNotesImportProgress(null), 600);
@@ -349,9 +349,9 @@ const LessonView = () => {
       // Fallback: try as text
       const text = await f.text();
       setSmartNotesDraft((prev) => (prev ? prev + "\n\n" : "") + text);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Smart Notes import failed", err);
-      toast.error(err?.message || "Upload failed");
+      toast.errorgetErrorMessage(err, "Upload failed");
     }
   }, []);
 
@@ -505,8 +505,8 @@ const LessonView = () => {
         setRatingCount(all.length);
         setRatingAvg(all.length ? all.reduce((s: number, r: any) => s + r.rating, 0) / all.length : 0);
       }
-    } catch (e: any) {
-      toast.error(e?.message || "Could not save rating");
+    } catch (e: unknown) {
+      toast.errorgetErrorMessage(e, "Could not save rating");
     } finally {
       setRatingSaving(false);
     }
@@ -1319,7 +1319,7 @@ const LessonView = () => {
         } else if (status && status >= 500) {
           toast.error("Server error loading lesson. Please retry.");
         } else {
-          toast.error(errData?.error || error.message || "Network error loading lesson URL");
+          toast.error(errData?.error || getErrorMessage(error) || "Network error loading lesson URL");
         }
         return null;
       }
@@ -1579,7 +1579,7 @@ const LessonView = () => {
           .createSignedUrl(filePath, 60 * 60 * 24 * 365);
         if (urlError) throw urlError;
         imageUrl = urlData.signedUrl;
-      } catch (err: any) {
+      } catch (err: unknown) {
 
         toast.error("Failed to upload image");
         setIsPostingComment(false);
@@ -2155,8 +2155,8 @@ const LessonView = () => {
                                         await addDownload(fileName, url, fileName, "MD", blob);
                                         setTimeout(() => URL.revokeObjectURL(url), 5_000);
                                         toast.success("Saved to Downloads");
-                                      } catch (err: any) {
-                                        toast.error(err?.message || "Download failed");
+                                      } catch (err: unknown) {
+                                        toast.errorgetErrorMessage(err, "Download failed");
                                       }
                                     }}
                                     title="Download notes"
@@ -2276,7 +2276,7 @@ const LessonView = () => {
                                                 .update({ transcript_md: null })
                                                 .eq("id", currentLesson.id);
                                               setSmartNotesSaving(false);
-                                              if (error) { toast.error(error.message || "Delete failed"); return; }
+                                              if (error) { toast.error(getErrorMessage(error) || "Delete failed"); return; }
                                               setCurrentLesson((prev) => prev ? { ...prev, transcript_md: null } : prev);
                                               setSmartNotesDraft("");
                                               setSmartNotesEditing(false);
@@ -2302,7 +2302,7 @@ const LessonView = () => {
                                               .eq("id", currentLesson.id);
                                             setSmartNotesSaving(false);
                                             if (error) {
-                                              toast.error(error.message || "Save failed");
+                                              toast.error(getErrorMessage(error) || "Save failed");
                                               return;
                                             }
                                             setCurrentLesson((prev) => prev ? { ...prev, transcript_md: smartNotesDraft || null } : prev);
@@ -2572,8 +2572,8 @@ const LessonView = () => {
                                 await addDownload(fileName, url, fileName, "MD", blob);
                                 toast.success("Saved to Downloads");
                                 setTimeout(() => URL.revokeObjectURL(url), 5_000);
-                              } catch (err: any) {
-                                toast.error(err?.message || "Save failed");
+                              } catch (err: unknown) {
+                                toast.errorgetErrorMessage(err, "Save failed");
                               }
                             }}
                           />

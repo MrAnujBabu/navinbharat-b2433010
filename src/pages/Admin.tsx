@@ -232,8 +232,8 @@ const Admin = () => {
       if (error) throw error;
       setUsersList(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
       toast.success("Role updated successfully");
-    } catch (err: any) {
-      toast.error("Failed to update role: " + (err?.message || "Unknown error"));
+    } catch (err: unknown) {
+      toast.error("Failed to update role: " + getErrorMessage(err, "Unknown error"));
     } finally {
       setRoleChanging(prev => ({ ...prev, [userId]: false }));
     }
@@ -360,8 +360,8 @@ const Admin = () => {
 
       toast.success("Payment Approved & Course Unlocked!");
       fetchDashboardData();
-    } catch (error: any) {
-      toast.error("Approval Error: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Approval Error: " + getErrorMessage(error));
     }
   };
 
@@ -376,8 +376,8 @@ const Admin = () => {
       if (error) throw error;
       toast.error("Payment request rejected.");
       fetchDashboardData();
-    } catch (error: any) {
-      toast.error("Error rejecting: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Error rejecting: " + getErrorMessage(error));
     }
   };
 
@@ -415,7 +415,7 @@ const Admin = () => {
           ...(rupees === null ? {} : { amount: Math.round(rupees * 100) }),
         },
       });
-      if (error) throw new Error(error.message || "Refund failed");
+      if (error) throw new Error(getErrorMessage(error) || "Refund failed");
       if (!data?.success) throw new Error(data?.error || 'Refund failed');
       toast.success(
         data?.is_full === false
@@ -423,8 +423,8 @@ const Admin = () => {
           : 'Refund initiated! Course access revoked.'
       );
       fetchDashboardData();
-    } catch (err: any) {
-      toast.error('Refund failed: ' + (err?.message || 'Unknown error'));
+    } catch (err: unknown) {
+      toast.error('Refund failed: ' + getErrorMessage(err, 'Unknown error'));
     } finally {
       setRefundingPayment(null);
     }
@@ -463,8 +463,8 @@ const Admin = () => {
       setCourseThumbnailUrl("");
       setCourseThumbnailMode("file");
       fetchDashboardData();
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     } finally {
       setIsCreatingCourse(false);
     }
@@ -473,7 +473,7 @@ const Admin = () => {
   const handleDeleteCourse = async (id: number) => {
     if (!(await confirmAction({ title: "Delete course? This will remove all lessons too!", variant: "destructive" }))) return;
     const { error } = await supabase.from('courses').delete().eq('id', id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(getErrorMessage(error));
     else { toast.success("Course deleted"); fetchDashboardData(); }
   };
 
@@ -505,7 +505,7 @@ const Admin = () => {
     const updateData: any = { title: editCourseData.title, description: editCourseData.description, price: parseFloat(editCourseData.price) || 0, grade: editCourseData.grade, start_date: editCourseData.startDate || null, end_date: editCourseData.endDate || null };
     if (thumbnailUrl) { updateData.image_url = thumbnailUrl; updateData.thumbnail_url = thumbnailUrl; }
     const { error } = await supabase.from('courses').update(updateData).eq('id', editingCourseId);
-    if (error) toast.error(error.message);
+    if (error) toast.error(getErrorMessage(error));
     else { toast.success("Course updated!"); setEditingCourseId(null); setEditThumbnailFile(null); setEditThumbnailUrl(""); setEditThumbnailMode("file"); fetchDashboardData(); }
   };
 
