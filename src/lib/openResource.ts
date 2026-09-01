@@ -25,6 +25,13 @@ export interface OpenResourceOptions {
   filename?: string;
   /** When true, trigger a byte download instead of opening the viewer. */
   download?: boolean;
+  /**
+   * Escape hatch for links that are known NOT to be readable in-app (a Drive
+   * page that blocks embedding, an HTML attachment saved as a "PDF"). Skips
+   * the bundled viewer and hands the URL to the system browser.
+   */
+  preferSystemBrowser?: boolean;
+
 }
 
 const PDF_EXT_RE = /\.pdf(\?|#|$)/i;
