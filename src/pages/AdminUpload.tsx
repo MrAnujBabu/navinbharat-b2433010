@@ -597,7 +597,7 @@ const AdminUpload = () => {
     }
   };
 
-  const handleOpenEdit = (lesson: any) => {
+  const handleOpenEdit = (lesson: DbLesson) => {
     setEditingLesson(lesson);
     setEditTitle(lesson.title || "");
     setEditVideoUrl(lesson.video_url || "");
@@ -669,7 +669,7 @@ const AdminUpload = () => {
   };
 
   // ─── Chapter edit/rename handler ─────────────────────────────────────────
-  const handleOpenChapterEdit = (ch: any) => {
+  const handleOpenChapterEdit = (ch: DbChapter) => {
     setEditingChapterId(ch.id);
     setEditChapterTitle(ch.title || "");
     setEditChapterCode(ch.code || "");
@@ -688,7 +688,7 @@ const AdminUpload = () => {
       if (error) throw error;
       toast.success("Chapter updated!");
       // Refresh chapters
-      const updateList = (list: any[]) => list.map(c => c.id === editingChapterId
+      const updateList = (list: DbChapter[]) => list.map(c => c.id === editingChapterId
         ? { ...c, title: editChapterTitle.trim(), code: editChapterCode.trim(), thumbnail_url: editChapterThumbnailUrl.trim() || null }
         : c
       );
