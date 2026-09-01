@@ -108,7 +108,7 @@ async function loadMarkdownText(url: string): Promise<string> {
         if (data instanceof Blob) return await data.text();
       }
     } catch (err) {
-      throw new Error((err as Error)?.message || "Could not read downloaded file");
+      throw new Error((err as Error)?.message || "Could not read downloaded file", { cause: err });
     }
     throw new Error("Could not read downloaded markdown file.");
   }

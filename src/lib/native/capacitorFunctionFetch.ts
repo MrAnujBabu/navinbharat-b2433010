@@ -68,6 +68,6 @@ export const capacitorFunctionFetch: typeof fetch = async (input, init) => {
   } catch (err) {
     // In native APKs, falling back to WebView fetch reintroduces the exact CORS
     // failure this bridge prevents. Surface a non-CORS native error instead.
-    throw new Error((err as Error)?.message || "Native Edge Function request failed");
+    throw new Error((err as Error)?.message || "Native Edge Function request failed", { cause: err });
   }
 };

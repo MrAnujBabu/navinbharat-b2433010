@@ -68,7 +68,7 @@ async function loadMarkdownText(url: string): Promise<string> {
       return text;
     } catch (err) {
       console.warn("[MarkdownViewer] blob fetch failed", err);
-      throw new Error("Offline copy missing. Please delete this entry and re-download the notes while online.");
+      throw new Error("Offline copy missing. Please delete this entry and re-download the notes while online.", { cause: err });
     }
   }
   let res: Response;
@@ -76,7 +76,8 @@ async function loadMarkdownText(url: string): Promise<string> {
     res = await fetch(url, { credentials: "omit" });
   } catch (e) {
     throw new Error(
-      `Couldn't reach the file source (${(e as Error)?.message || "network error"}). If you're offline, re-download it while online.`
+      `Couldn't reach the file source (${(e as Error)?.message || "network error"}). If you're offline, re-download it while online.`,
+      { cause: e },
     );
   }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
