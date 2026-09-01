@@ -332,8 +332,8 @@ const AdminUpload = () => {
       const { data } = await supabase.from('chapters').select('*')
         .eq('course_id', selectedCourseId).is('parent_id', null).order('position', { ascending: true });
       setChapters(data || []);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     } finally {
       setCreatingChapter(false);
     }
@@ -360,8 +360,8 @@ const AdminUpload = () => {
       const { data } = await supabase.from('chapters').select('*')
         .eq('parent_id', selectedChapterId).order('position', { ascending: true });
       setSubChapters(data || []);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     } finally {
       setCreatingSubfolder(false);
     }
@@ -417,8 +417,8 @@ const AdminUpload = () => {
       if (signErr) throw signErr;
       setVideoUrl(data.signedUrl);
       toast.success("Video uploaded to storage!");
-    } catch (err: any) {
-      toast.error("Video upload failed: " + err.message);
+    } catch (err: unknown) {
+      toast.error("Video upload failed: " + getErrorMessage(err));
       setVideoFile(null);
     } finally {
       setVideoFileUploading(false);
@@ -446,8 +446,8 @@ const AdminUpload = () => {
       setThumbnailUrl(`storage://content/${fileName}`);
 
       toast.success("Thumbnail uploaded!");
-    } catch (err: any) {
-      toast.error("Thumbnail upload failed: " + err.message);
+    } catch (err: unknown) {
+      toast.error("Thumbnail upload failed: " + getErrorMessage(err));
       setThumbnailFile(null);
     } finally {
       setThumbnailFileUploading(false);
@@ -575,8 +575,8 @@ const AdminUpload = () => {
       const { data } = await supabase.from('lessons').select('*')
         .eq('chapter_id', selectedChapterId).order('position', { ascending: true });
       setLessons(data || []);
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     } finally {
       setIsUploading(false);
       setUploadingAttachments(false);
@@ -586,7 +586,7 @@ const AdminUpload = () => {
   const handleDeleteLesson = async (id: string) => {
     if (!(await confirmAction({ title: "Delete this lesson?", variant: "destructive" }))) return;
     const { error } = await supabase.from('lessons').delete().eq('id', id);
-    if (error) { toast.error(error.message); }
+    if (error) { toast.error(getErrorMessage(error)); }
     else {
       toast.success("Lesson deleted");
       setLessons(prev => prev.filter(l => l.id !== id));
@@ -625,8 +625,8 @@ const AdminUpload = () => {
         : l
       ));
       setEditingLesson(null);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     } finally {
       setIsSavingEdit(false);
     }
@@ -660,8 +660,8 @@ const AdminUpload = () => {
           .eq('parent_id', selectedChapterId).order('position', { ascending: true });
         setSubChapters(refreshedSubs || []);
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -692,8 +692,8 @@ const AdminUpload = () => {
       setChapters(updateList(chapters));
       setSubChapters(updateList(subChapters));
       setEditingChapterId(null);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     } finally {
       setSavingChapterEdit(false);
     }
