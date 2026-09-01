@@ -618,7 +618,9 @@ const FastPdfReader = forwardRef<FastPdfReaderHandle, Props>(
       isArchiveSource(src),
       zoom,
       (navigator as unknown as { deviceMemory?: number }).deviceMemory,
+      numPages,
     );
+
 
 
 
