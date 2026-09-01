@@ -1145,7 +1145,11 @@ const FastPdfReader = forwardRef<FastPdfReaderHandle, Props>(
 
 
     const onLoadSuccess = useCallback(
-      ({ numPages: n }: { numPages: number }) => {
+      (doc: { numPages: number }) => {
+        const n = doc.numPages;
+        // Keep the document proxy so in-reader search can read page text.
+        pdfDocRef.current = doc as unknown as typeof pdfDocRef.current;
+        numPagesRef.current = n;
         if (!sawFirstByte.current) {
           sawFirstByte.current = true;
           onFirstByte?.();
@@ -1154,6 +1158,7 @@ const FastPdfReader = forwardRef<FastPdfReaderHandle, Props>(
         setError(null);
         setProgress(null);
         setNumPages(n);
+
         archiveStallRetriesRef.current = 0;
         transportRetriesRef.current = 0;
         addBreadcrumb("pdf", "load-success", { pages: n });
