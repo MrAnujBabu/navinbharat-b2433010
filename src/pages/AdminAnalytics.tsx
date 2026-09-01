@@ -111,7 +111,7 @@ const AdminAnalytics = () => {
         .lte("created_at", end.toISOString())
         .then(({ data }) => ({
           date: format(day, "EEE dd"),
-          users: new Set((data ?? []).map((r: any) => r.user_id)).size,
+          users: new Set((data ?? []).map((r) => r.user_id)).size,
         }));
     });
     const results = await Promise.all(promises);
@@ -139,18 +139,20 @@ const AdminAnalytics = () => {
     if (!courses) return;
 
     const lessonMap: Record<number, number> = {};
-    (lessonCounts ?? []).forEach((l: any) => {
+    (lessonCounts ?? []).forEach((l) => {
+      if (l.course_id == null) return;
       lessonMap[l.course_id] = (lessonMap[l.course_id] ?? 0) + 1;
     });
 
     const completionMap: Record<number, number> = {};
-    (progress ?? []).forEach((p: any) => {
+    (progress ?? []).forEach((p) => {
+      if (p.course_id == null) return;
       completionMap[p.course_id] = (completionMap[p.course_id] ?? 0) + 1;
     });
 
     const result: CourseCompletion[] = courses
-      .filter((c: any) => lessonMap[c.id] > 0)
-      .map((c: any) => {
+      .filter((c) => lessonMap[c.id] > 0)
+      .map((c) => {
         const total = lessonMap[c.id] ?? 0;
         const completed = completionMap[c.id] ?? 0;
         return {
