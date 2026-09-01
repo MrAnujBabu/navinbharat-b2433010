@@ -607,7 +607,84 @@ const FastPdfReader = forwardRef<FastPdfReaderHandle, Props>(
       };
     }, [zoom, commitZoom, anchorAfterCommit]);
 
+    // ── Reader imperative API ───────────────────────────────────────────────
+    // Zoom buttons, page jump and text search live in the reader chrome
+    // (DocReaderShell), so they drive this component through the handle.
+    // Everything reads through refs: the handle is installed once and must not
+    // capture stale zoom/page values.
+    const zoomRef = useRef(zoom);
+    zoomRef.current = zoom;
+    const numPagesRef = useRef(0);
+    const textCacheRef = useRef<Map<number, string>>(new Map());
+
+    useEffect(() => { onZoomChange?.(zoom); }, [zoom, onZoomChange]);
+    useEffect(() => { textCacheRef.current = new Map(); }, [src]);
+
+    /** Anchor a programmatic zoom on the centre of the viewport. */
+    const zoomAroundCentre = useCallback((next: number) => {
+      const el = scrollRef.current;
+      const prev = zoomRef.current;
+      const v = Math.min(4, Math.max(0.5, Math.round(next * 100) / 100));
+      if (Math.abs(v - prev) < 0.005) return;
+      if (el) {
+        const vx = el.clientWidth / 2;
+        const vy = el.clientHeight / 2;
+        focalRef.current = { cx: el.scrollLeft + vx, cy: el.scrollTop + vy, vx, vy };
+        anchorAfterCommit(prev, v);
+      }
+      commitZoom(v);
+    }, [anchorAfterCommit, commitZoom]);
+
+    useImperativeHandle(ref, () => ({
+      getScrollEl: () => scrollRef.current,
+      getIframeEl: () => null,
+      getZoom: () => zoomRef.current,
+      zoomBy: (factor: number) => zoomAroundCentre(zoomRef.current * factor),
+      fitWidth: () => zoomAroundCentre(1),
+      getNumPages: () => numPagesRef.current,
+      goToPage: (page: number) => {
+        const root = scrollRef.current;
+        if (!root) return;
+        const target = Math.max(1, Math.min(numPagesRef.current || page, page));
+        const node = root.querySelector<HTMLElement>(`[data-page="${target}"]`);
+        if (node) root.scrollTo({ top: Math.max(0, node.offsetTop - 8), behavior: "smooth" });
+        else if (numPagesRef.current > 0) {
+          // Slot not mounted yet (virtualised): approximate by proportion.
+          const max = root.scrollHeight - root.clientHeight;
+          root.scrollTo({ top: (max * (target - 1)) / numPagesRef.current });
+        }
+      },
+      findPages: async (query: string) => {
+        const needle = query.trim().toLowerCase();
+        const doc = pdfDocRef.current;
+        if (!needle || !doc) return [];
+        const total = numPagesRef.current;
+        const hits: number[] = [];
+        for (let p = 1; p <= total; p += 1) {
+          let text = textCacheRef.current.get(p);
+          if (text === undefined) {
+            try {
+              const page = await doc.getPage(p);
+              const content = await page.getTextContent();
+              text = content.items
+                .map((it) => (typeof (it as { str?: string }).str === "string" ? (it as { str: string }).str : ""))
+                .join(" ")
+                .toLowerCase();
+            } catch {
+              text = "";
+            }
+            textCacheRef.current.set(p, text);
+            // Yield so a long document never blocks the UI thread.
+            if (p % 8 === 0) await new Promise((r) => setTimeout(r, 0));
+          }
+          if (text.includes(needle)) hits.push(p);
+        }
+        return hits;
+      },
+    }), [zoomAroundCentre]);
+
     const renderWidth = Math.round(pageWidth * zoom);
+
 
     // ── Zoom memory guard (crash-shield) ────────────────────────────────────
     // react-pdf rasterises each canvas at `width * devicePixelRatio`, so bytes
