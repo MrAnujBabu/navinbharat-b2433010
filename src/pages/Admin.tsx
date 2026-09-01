@@ -417,6 +417,10 @@ const Admin = () => {
   const handleInitiateRefund = async () => {
     const payment = refundConfirmPayment;
     if (!payment) return;
+    if (!("razorpay_payment_id" in payment)) {
+      toast.error("Only online (Razorpay) payments can be refunded automatically.");
+      return;
+    }
     const trimmed = refundAmountText.trim();
     const rupees = trimmed === "" ? null : Number(trimmed);
     if (rupees !== null && (!Number.isFinite(rupees) || rupees <= 0)) {
