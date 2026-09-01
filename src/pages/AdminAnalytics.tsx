@@ -204,7 +204,7 @@ const AdminAnalytics = () => {
     setQuizData(result);
 
     const totalAttempts = attempts?.length ?? 0;
-    const totalPassed = attempts?.filter((a: any) => a.passed).length ?? 0;
+    const totalPassed = attempts?.filter((a) => a.passed).length ?? 0;
     const avgPassRate = totalAttempts > 0 ? Math.round((totalPassed / totalAttempts) * 100) : 0;
     setSummaryStats(prev => ({ ...prev, totalAttempts, avgPassRate }));
   };
@@ -219,7 +219,7 @@ const AdminAnalytics = () => {
 
     // Aggregate per user
     const userMap: Record<string, { lessons: number; completed: number }> = {};
-    progress.forEach((p: any) => {
+    progress.forEach((p) => {
       if (!userMap[p.user_id]) userMap[p.user_id] = { lessons: 0, completed: 0 };
       userMap[p.user_id].lessons++;
       if (p.completed) userMap[p.user_id].completed++;
@@ -241,7 +241,7 @@ const AdminAnalytics = () => {
       .in("id", topIds);
 
     const result: TopStudent[] = topIds.map((id, idx) => {
-      const profile = profiles?.find((p: any) => p.id === id);
+      const profile = profiles?.find((p) => p.id === id);
       const stats = userMap[id];
       return {
         name: profile?.full_name ?? `Student ${idx + 1}`,
@@ -288,7 +288,7 @@ const AdminAnalytics = () => {
             </div>
           </div>
 
-          <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+          <Tabs value={tab} onValueChange={(v) => setTab(v as AnalyticsTab)}>
             <TabsList>
               <TabsTrigger value="learning">Learning</TabsTrigger>
               <TabsTrigger value="users">Users & Sessions</TabsTrigger>
