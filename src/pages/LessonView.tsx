@@ -94,6 +94,17 @@ interface Lesson {
   transcript_md?: string | null;
 }
 
+interface CourseSummary {
+  id: number;
+  title: string;
+  description?: string | null;
+  price?: number | null;
+  grade?: string | null;
+  image_url?: string | null;
+  thumbnail_url?: string | null;
+  [key: string]: unknown;
+}
+
 interface Chapter {
   id: string;
   code: string;
@@ -131,7 +142,7 @@ const LessonView = () => {
 
   // State
   const [loading, setLoading] = useState(true);
-  const [course, setCourse] = useState<any>(null);
+  const [course, setCourse] = useState<CourseSummary | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
@@ -229,7 +240,7 @@ const LessonView = () => {
           });
           throw new Error("PDF too large (>15 MB).");
         }
-        const pdfjs: any = await import("pdfjs-dist");
+        const pdfjs = await import("pdfjs-dist");
         try {
           const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
           pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
@@ -246,7 +257,7 @@ const LessonView = () => {
         for (let i = 1; i <= doc.numPages; i++) {
           const page = await doc.getPage(i);
           const tc = await page.getTextContent();
-          const txt = tc.items.map((it: any) => it.str).join(" ").replace(/\s+/g, " ").trim();
+          const txt = tc.items.map((it) => ("str" in it ? it.str : "")).join(" ").replace(/\s+/g, " ").trim();
           if (txt) out += `\n\n## Page ${i}\n\n${txt}`;
           setSmartNotesImportProgress(35 + Math.round((i / doc.numPages) * 55));
         }
@@ -316,7 +327,7 @@ const LessonView = () => {
           return;
         }
         toast.info("PDF se text extract ho raha hai…");
-        const pdfjs: any = await import("pdfjs-dist");
+        const pdfjs = await import("pdfjs-dist");
         try {
           const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
           pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
@@ -327,7 +338,7 @@ const LessonView = () => {
         for (let i = 1; i <= doc.numPages; i++) {
           const page = await doc.getPage(i);
           const tc = await page.getTextContent();
-          const txt = tc.items.map((it: any) => it.str).join(" ").replace(/\s+/g, " ").trim();
+          const txt = tc.items.map((it) => ("str" in it ? it.str : "")).join(" ").replace(/\s+/g, " ").trim();
           if (txt) out += `\n\n## Page ${i}\n\n${txt}`;
         }
         setSmartNotesDraft((prev) => (prev ? prev + "\n\n" : "") + out);
@@ -467,11 +478,11 @@ const LessonView = () => {
         .eq("lesson_id", currentLesson.id);
       if (cancelled || !all) return;
       const count = all.length;
-      const avg = count > 0 ? all.reduce((s: number, r: any) => s + r.rating, 0) / count : 0;
+      const avg = count > 0 ? all.reduce((sum, r) => sum + r.rating, 0) / count : 0;
       setRatingCount(count);
       setRatingAvg(avg);
       if (user) {
-        const mine = all.find((r: any) => r.user_id === user.id);
+        const mine = all.find((r) => r.user_id === user.id);
         if (mine) {
           setRatingValue(mine.rating);
           setRatingComment(mine.comment || "");
@@ -504,7 +515,7 @@ const LessonView = () => {
         .from("lesson_ratings").select("rating").eq("lesson_id", ratingLessonId);
       if (all) {
         setRatingCount(all.length);
-        setRatingAvg(all.length ? all.reduce((s: number, r: any) => s + r.rating, 0) / all.length : 0);
+        setRatingAvg(all.length ? all.reduce((sum, r) => sum + r.rating, 0) / all.length : 0);
       }
     } catch (e: unknown) {
       toast.error(getErrorMessage(e, "Could not save rating"));
@@ -1401,9 +1412,9 @@ const LessonView = () => {
         if (bundleErr) throw bundleErr;
 
         const b = (bundle ?? {}) as {
-          course: any;
-          chapters: any[];
-          lessons: any[];
+          course: CourseSummary | null;
+          chapters: Chapter[];
+          lessons: Partial<Lesson>[];
           is_enrolled: boolean;
         };
 
@@ -1414,7 +1425,7 @@ const LessonView = () => {
         setCourse(b.course);
         setChapters(b.chapters || []);
 
-        const mappedLessons: Lesson[] = (b.lessons || []).map((l: any) => ({
+        const mappedLessons: Lesson[] = (b.lessons || []).map((l) => ({
           ...l,
           video_url: l.video_url || '',
           class_pdf_url: l.class_pdf_url || null,
