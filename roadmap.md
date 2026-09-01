@@ -18,3 +18,5 @@
 
 - [x] Clear preview typecheck errors (Error `cause` needs ES2022.Error lib — added to tsconfig.app.json)
 - [ ] Fix preview typecheck errors introduced during the lint/typing pass (ContentDrillDown, LibraryManager, PaymentsSection, useLessons)
+- [x] Typecheck errors from the typing pass fixed (build green, 510 tests pass)
+- [ ] Remaining 279 lint warnings (mostly `any` in src/pages/* + edge functions) — continue typing pass
