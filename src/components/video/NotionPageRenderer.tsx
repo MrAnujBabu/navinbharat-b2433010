@@ -10,6 +10,8 @@ import { savePdfToDevice } from "../../lib/nativePdfSaver";
 import { useToast } from "../../hooks/use-toast";
 import { traceReader } from "../../lib/readerDiagnostics";
 import AutoScrollFab from "../viewer/AutoScrollFab";
+import { openResource } from "../../lib/openResource";
+
 
 
 
@@ -154,7 +156,7 @@ export default function NotionPageRenderer({ url, title, onClose, onReady, onDoc
     try {
       const mod = await import("html2pdf.js");
       const html2pdf = (mod as unknown as { default: any }).default;
-      const safeName = (title || "Notion Page").replace(/[\/\\?%*:|"<>]/g, "_").slice(0, 80);
+      const safeName = (title || "Notion Page").replace(/[/\\?%*:|"<>]/g, "_").slice(0, 80);
       const clone = target.cloneNode(true) as HTMLElement;
       clone.querySelectorAll(".notion-export-ignore").forEach((el) => el.remove());
       const sandbox = document.createElement("div");
@@ -368,7 +370,7 @@ export default function NotionPageRenderer({ url, title, onClose, onReady, onDoc
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { try { window.open(activeUrl, "_blank", "noopener,noreferrer"); } catch {} }}
+              onClick={() => { void openResource({ url: activeUrl, kind: "link" }); }}
             >
               Open in Notion
             </Button>
@@ -533,7 +535,7 @@ export default function NotionPageRenderer({ url, title, onClose, onReady, onDoc
                       id && ((recordMap?.block?.[id] as any)?.value || (dashed && (recordMap?.block?.[dashed] as any)?.value))
                     );
                     if (!known) {
-                      try { window.open(next, "_blank", "noopener,noreferrer"); } catch {}
+                      void openResource({ url: next, kind: "link" });
                       return;
                     }
                     setStack((s) => [...s, next]);

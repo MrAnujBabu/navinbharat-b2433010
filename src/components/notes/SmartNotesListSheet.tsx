@@ -96,7 +96,7 @@ export default function SmartNotesListSheet({
             <ul className="space-y-2">
               {notes.map((n) => {
                 const isEditing = editingId === n.id;
-                const preview = (n.content_md || "").replace(/[#*_>`\[\]]/g, "").slice(0, 90).trim();
+                const preview = (n.content_md || "").replace(/[#*_>`[\]]/g, "").slice(0, 90).trim();
                 return (
                   <li
                     key={n.id}

@@ -74,8 +74,8 @@ export default function FolderGrid({
   moveTargets = [],
   hideWhenEmpty = false,
 }: Props) {
-  if (hideWhenEmpty && folders.length === 0) return null;
   const [newOpen, setNewOpen] = useState(false);
+
   const [renameTarget, setRenameTarget] = useState<PersonalFolder | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PersonalFolder | null>(null);
   const [moveTarget, setMoveTarget] = useState<PersonalFolder | null>(null);
@@ -109,6 +109,11 @@ export default function FolderGrid({
       alive = false;
     };
   }, [folders, moveTargets]);
+
+  // Early return lives below the hooks so hook order stays stable across renders.
+  if (hideWhenEmpty && folders.length === 0) return null;
+
+
 
   return (
     <div className="space-y-3">

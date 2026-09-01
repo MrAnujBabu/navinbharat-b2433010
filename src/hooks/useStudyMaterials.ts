@@ -85,7 +85,7 @@ export async function replaceStudyMaterialFile(
   m: StudyMaterial,
   file: File,
 ): Promise<{ file_url: string; mime_type: string; file_size: number }> {
-  const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+  const safeName = file.name.replace(/[^\w.-]+/g, "_");
   const path = `${m.course_id}/${crypto.randomUUID()}-${safeName}`;
   const { error: upErr } = await supabase.storage
     .from(BUCKET)

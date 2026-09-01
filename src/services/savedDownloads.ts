@@ -99,7 +99,7 @@ if (typeof document !== "undefined") {
 }
 
 function sanitize(name: string): string {
-  return (name || "file").replace(/[\/\\?%*:|"<>]/g, "_").trim();
+  return (name || "file").replace(/[/\\?%*:|"<>]/g, "_").trim();
 }
 
 function bytesToBase64(bytes: Uint8Array): string {

@@ -13,7 +13,7 @@ export function sanitizeAiField(v: unknown, max = 1500): string {
       /ignore\s+(?:all\s+|any\s+)?(?:previous\s+|prior\s+)?(instructions?|prompts?|rules?)/gi,
       "[filtered]",
     )
-    .replace(/system\s*[:\-]/gi, "[filtered]")
+    .replace(/system\s*[:-]/gi, "[filtered]")
     .replace(/you\s+are\s+now\s+/gi, "[filtered]")
     .slice(0, max);
 }

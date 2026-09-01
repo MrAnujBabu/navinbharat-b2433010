@@ -1429,7 +1429,7 @@ async function fetchDriveFile(id: string): Promise<Response> {
   }
 
   // tier 3 — legacy confirm token
-  const token = html.match(/[?&]confirm=([0-9A-Za-z_\-]+)/)?.[1];
+  const token = html.match(/[?&]confirm=([0-9A-Za-z_-]+)/)?.[1];
   if (token) {
     const confirmedHeaders = new Headers(baseHeaders);
     if (cookie) confirmedHeaders.set("Cookie", cookie);

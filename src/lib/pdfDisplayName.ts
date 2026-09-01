@@ -35,7 +35,7 @@ export function humanizeFileName(raw?: string | null): string {
 export function looksLikeMachineName(name: string): boolean {
   const n = name.trim();
   if (!n) return true;
-  const compact = n.replace(/[\s\-]/g, "");
+  const compact = n.replace(/[\s-]/g, "");
   // Pure hex / base-ish blob with no vowel-bearing words.
   if (/^[0-9a-f]{12,}$/i.test(compact)) return true;
   if (/^[0-9]{6,}$/.test(compact)) return true;

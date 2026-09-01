@@ -19,6 +19,51 @@ interface Props {
  * Lovable-style: pill shape, same geometry active/inactive, inverted bg on active
  * (no color swap, no border on active). See skill: lovable-design-language.
  */
+function Chip({
+  value,
+  label,
+  count,
+  active,
+  onSelect,
+}: {
+  value: string;
+  label: string;
+  count: number;
+  active: boolean;
+  onSelect: (next: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        void selectionHaptic();
+        onSelect(value);
+      }}
+      aria-pressed={active}
+      role="tab"
+      className={cn(
+        "inline-flex items-center gap-1.5 h-7 px-3 rounded-full whitespace-nowrap shrink-0",
+        "text-xs transition-colors duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        active
+          ? "bg-foreground text-background font-medium"
+          : "border border-border/60 bg-background text-foreground/70 hover:bg-muted/60 hover:text-foreground",
+      )}
+    >
+      <span>{label}</span>
+      <span
+        className={cn(
+          "inline-flex items-center justify-center h-4 min-w-[1rem] px-1 rounded-full",
+          "text-[10px] tabular-nums leading-none",
+          active ? "bg-background/20 text-background" : "bg-muted/70 text-foreground/60",
+        )}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
+
 export default function FormatFilterChips({
   chips,
   total,
@@ -27,40 +72,6 @@ export default function FormatFilterChips({
   className,
 }: Props) {
   if (total === 0) return null;
-
-  const Chip = ({ value, label, count }: { value: string; label: string; count: number }) => {
-    const active = selected === value;
-    return (
-      <button
-        type="button"
-        onClick={() => {
-          void selectionHaptic();
-          onChange(value);
-        }}
-        aria-pressed={active}
-        role="tab"
-        className={cn(
-          "inline-flex items-center gap-1.5 h-7 px-3 rounded-full whitespace-nowrap shrink-0",
-          "text-xs transition-colors duration-150",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          active
-            ? "bg-foreground text-background font-medium"
-            : "border border-border/60 bg-background text-foreground/70 hover:bg-muted/60 hover:text-foreground",
-        )}
-      >
-        <span>{label}</span>
-        <span
-          className={cn(
-            "inline-flex items-center justify-center h-4 min-w-[1rem] px-1 rounded-full",
-            "text-[10px] tabular-nums leading-none",
-            active ? "bg-background/20 text-background" : "bg-muted/70 text-foreground/60",
-          )}
-        >
-          {count}
-        </span>
-      </button>
-    );
-  };
 
   return (
     <div
@@ -72,10 +83,24 @@ export default function FormatFilterChips({
       role="tablist"
       aria-label="Filter by file format"
     >
-      <Chip value={ALL_CHIP} label="All" count={total} />
+      <Chip
+        value={ALL_CHIP}
+        label="All"
+        count={total}
+        active={selected === ALL_CHIP}
+        onSelect={onChange}
+      />
       {chips.map((c) => (
-        <Chip key={c.type} value={c.type} label={c.type} count={c.count} />
+        <Chip
+          key={c.type}
+          value={c.type}
+          label={c.type}
+          count={c.count}
+          active={selected === c.type}
+          onSelect={onChange}
+        />
       ))}
     </div>
   );
 }
+

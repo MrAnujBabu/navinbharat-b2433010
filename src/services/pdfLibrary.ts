@@ -187,7 +187,7 @@ export async function downloadPdf(
           })();
       const blobUrl = URL.createObjectURL(blob);
       const rawName = meta.title || `${meta.pdf_id}.${extOf(meta.title)}`;
-      const filename = rawName.replace(/[\/\\?%*:|"<>]/g, "_");
+      const filename = rawName.replace(/[/\\?%*:|"<>]/g, "_");
       const a = document.createElement("a");
       a.href = blobUrl;
       a.download = filename;

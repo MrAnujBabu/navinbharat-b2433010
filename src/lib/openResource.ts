@@ -25,6 +25,13 @@ export interface OpenResourceOptions {
   filename?: string;
   /** When true, trigger a byte download instead of opening the viewer. */
   download?: boolean;
+  /**
+   * Escape hatch for links that are known NOT to be readable in-app (a Drive
+   * page that blocks embedding, an HTML attachment saved as a "PDF"). Skips
+   * the bundled viewer and hands the URL to the system browser.
+   */
+  preferSystemBrowser?: boolean;
+
 }
 
 const PDF_EXT_RE = /\.pdf(\?|#|$)/i;
@@ -39,7 +46,7 @@ function inferKind(url: string): ResourceKind {
 }
 
 export async function openResource(opts: OpenResourceOptions): Promise<void> {
-  const { url, filename, download } = opts;
+  const { url, filename, download, preferSystemBrowser } = opts;
   const kind = opts.kind && opts.kind !== "auto" ? opts.kind : inferKind(url);
 
   if (download) {
@@ -48,11 +55,11 @@ export async function openResource(opts: OpenResourceOptions): Promise<void> {
     return;
   }
 
-  if (kind === "pdf") {
+  if (kind === "pdf" && !preferSystemBrowser) {
     const { embedUrl } = resolveEmbedUrl(url);
     await openExternal(embedUrl || url, { preferWebView: true });
     return;
   }
 
-  await openExternal(url);
+  await openExternal(url, preferSystemBrowser ? { preferWebView: false } : undefined);
 }

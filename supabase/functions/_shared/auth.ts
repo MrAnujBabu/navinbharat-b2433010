@@ -32,11 +32,17 @@ export async function requireUser(
   // Fall back to getUser() for older supabase-js versions without getClaims.
   let userId: string | undefined;
   try {
-    // @ts-ignore - getClaims exists on supabase-js >= 2.45
-    if (typeof client.auth.getClaims === "function") {
-      // @ts-ignore
-      const { data, error } = await client.auth.getClaims(token);
-      if (!error && data?.claims?.sub) userId = data.claims.sub as string;
+    // `getClaims` only exists on supabase-js >= 2.45; narrow it structurally
+    // instead of silencing the compiler with @ts-ignore.
+    const auth = client.auth as unknown as {
+      getClaims?: (jwt: string) => Promise<{
+        data: { claims?: { sub?: string } } | null;
+        error: unknown;
+      }>;
+    };
+    if (typeof auth.getClaims === "function") {
+      const { data, error } = await auth.getClaims(token);
+      if (!error && data?.claims?.sub) userId = data.claims.sub;
     }
   } catch { /* fall through */ }
   if (!userId) {

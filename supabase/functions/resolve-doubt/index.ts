@@ -141,7 +141,7 @@ serve(async (req) => {
     const sanitizeAiField = (v: unknown, max = 1500): string => String(v || "")
       .replace(/[<>]/g, "")
       .replace(/ignore\s+(all|any|previous|prior)\s+(instructions?|prompts?|rules?)/gi, "[filtered]")
-      .replace(/system\s*[:\-]/gi, "[filtered]")
+      .replace(/system\s*[:-]/gi, "[filtered]")
       .replace(/you\s+are\s+now\s+/gi, "[filtered]")
       .slice(0, max);
 

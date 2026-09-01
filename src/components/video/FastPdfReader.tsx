@@ -25,7 +25,7 @@ import { downloadFile } from "../../utils/fileUtils";
 import { addBreadcrumb, captureException } from "../../lib/sentry";
 import { isResolvableStorageViewerUrl, resolveStorageBytes } from "@/lib/native/naveenStoragePdf";
 import { isKnownNonPdfWebUrl } from "../../lib/detectFileType";
-import { openExternal } from "../../lib/native/browser";
+import { openResource } from "../../lib/openResource";
 import { requestPdfViaNativeHttp } from "../../lib/nativePdfHttp";
 import { friendlyPdfErrorMessage } from "../../lib/pdfErrorMessage";
 import { probeDriveBlock, drivePreviewFromViewUrl, drivePreviewFromSource } from "../../lib/driveBlockDiagnosis";
@@ -1290,7 +1290,7 @@ const FastPdfReader = forwardRef<FastPdfReaderHandle, Props>(
           <p className="text-foreground">This attachment is a web page, not a PDF.</p>
           <button
             type="button"
-            onClick={() => void openExternal(src, { preferWebView: false })}
+            onClick={() => void openResource({ url: src, kind: "link", preferSystemBrowser: true })}
             className="inline-flex items-center gap-1 text-primary underline"
           >
             <ExternalLink className="h-3.5 w-3.5" /> Open in browser
@@ -1315,7 +1315,7 @@ const FastPdfReader = forwardRef<FastPdfReaderHandle, Props>(
             {errorAction ? (
               <button
                 type="button"
-                onClick={() => void openExternal(errorAction.url, { preferWebView: false })}
+                onClick={() => void openResource({ url: errorAction.url, kind: "link", preferSystemBrowser: true })}
                 className="inline-flex shrink-0 items-center gap-1 text-primary underline"
               >
                 <ExternalLink className="h-3.5 w-3.5" /> {errorAction.label}
@@ -1334,7 +1334,7 @@ const FastPdfReader = forwardRef<FastPdfReaderHandle, Props>(
             {errorAction ? (
               <button
                 type="button"
-                onClick={() => void openExternal(errorAction.url, { preferWebView: false })}
+                onClick={() => void openResource({ url: errorAction.url, kind: "link", preferSystemBrowser: true })}
                 className="inline-flex items-center gap-1 text-primary underline"
               >
                 <ExternalLink className="h-3.5 w-3.5" /> {errorAction.label}

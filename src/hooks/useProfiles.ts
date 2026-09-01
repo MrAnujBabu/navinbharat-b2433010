@@ -42,6 +42,8 @@ async function fetchProfileRow(userId: string): Promise<Profile | null> {
 
 export const useProfiles = () => {
   const { user, isAdmin } = useAuth();
+  // Plain local: an optional-chain dep defeats React-compiler memoization.
+  const userId = user?.id;
   const queryClient = useQueryClient();
 
   // Cached per-user profile — shared across ALL components via React Query.
@@ -54,9 +56,9 @@ export const useProfiles = () => {
   });
 
   const fetchProfile = useCallback(async () => {
-    if (!user?.id) return;
-    await queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
-  }, [user?.id, queryClient]);
+    if (!userId) return;
+    await queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+  }, [userId, queryClient]);
 
   const fetchAllProfiles = useCallback(async (): Promise<Profile[]> => {
     if (!isAdmin) return [];

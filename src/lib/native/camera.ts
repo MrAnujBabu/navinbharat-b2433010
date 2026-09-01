@@ -42,7 +42,7 @@ function base64ToFile(base64: string, filename: string, mime = "image/jpeg"): Fi
     return new File([bytes], filename, { type: mime });
   } catch (e) {
     logger.error("[camera] base64ToFile decode failed", e);
-    throw new Error("Couldn't read the captured photo. Please try again.");
+    throw new Error("Couldn't read the captured photo. Please try again.", { cause: e });
   }
 }
 
