@@ -159,7 +159,7 @@ const Index = () => {
   const { stats: platformStats } = usePlatformStats();
 
   const heroData = useMemo(() => {
-    const dbHero = getContentByKey("hero");
+    const dbHero = getContentByKey("hero") as { title?: string; subtitle?: string; cta_text?: string } | null | undefined;
     if (dbHero) return {
       title: dbHero.title || defaultHeroData.title,
       subtitle: dbHero.subtitle || defaultHeroData.subtitle,

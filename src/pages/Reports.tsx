@@ -270,7 +270,7 @@ const Reports = () => {
                       <XAxis dataKey="name" tick={{ fontSize: 11 }} className="text-muted-foreground" />
                       <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} className="text-muted-foreground" />
                       <Tooltip
-                        formatter={(v: number, _name: string, props: { payload: { count: number } }) => [`${v}% avg (${props.payload.count} attempts)`, "Score"]}
+                        formatter={((v, _name, item) => [`${v}% avg (${(item?.payload as { count?: number } | undefined)?.count ?? 0} attempts)`, "Score"]) as React.ComponentProps<typeof Tooltip>["formatter"]}
                         contentStyle={{ fontSize: 12, borderRadius: 8 }}
                       />
                       <Bar dataKey="avg" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" fillOpacity={0.8} />
@@ -341,7 +341,7 @@ const Reports = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {enrollments.map((e: { id: string; course?: { title?: string }; progress_percentage?: number }) => (
+                {enrollments.map((e) => (
                   <div key={e.id} className="space-y-1.5">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium truncate">{e.course?.title ?? "Course"}</span>

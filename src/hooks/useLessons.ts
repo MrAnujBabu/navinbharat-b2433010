@@ -95,7 +95,7 @@ export const useLessons = (courseId?: number) => {
         .limit(200); // Bandwidth cap — no course expected >200 lessons; prevents runaway payload.
 
       if (dbError) throw dbError;
-      const mapped = (data || []).map(mapLesson);
+      const mapped = ((data || []) as unknown as LessonRow[]).map(mapLesson);
       setLessons(mapped);
       setCached(cacheKey(courseId), mapped);
     } catch (err) {
@@ -178,7 +178,7 @@ export const useLessons = (courseId?: number) => {
 
       const { error: dbError } = await supabase
         .from("lessons")
-        .update(updateData)
+        .update(updateData as never)
         .eq("id", id);
 
       if (dbError) throw dbError;

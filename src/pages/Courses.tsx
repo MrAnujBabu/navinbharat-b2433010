@@ -233,7 +233,7 @@ const Courses = () => {
                   key={course.id} 
                   course={enriched}
                   isAdmin={isAdmin}
-                  onAdminEnroll={adminEnroll}
+                  onAdminEnroll={async (courseId: number) => { await adminEnroll(courseId); }}
                   isEnrolling={isEnrolling}
                   isEnrolled={isEnrolled}
                   onEnrollFree={course.price === 0 && !isEnrolled ? async () => {
