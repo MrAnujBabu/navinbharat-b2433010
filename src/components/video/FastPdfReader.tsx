@@ -84,8 +84,11 @@ interface Props {
   onPageChange?: (page: number) => void;
   /** Fired once after mount when scroll/iframe refs are ready to read. */
   onReady?: () => void;
+  /** Notified whenever the committed zoom factor changes. */
+  onZoomChange?: (zoom: number) => void;
   /** Stable identity that keeps lifecycle events scoped to this reader. */
   readerId?: string;
+
 }
 
 /**
