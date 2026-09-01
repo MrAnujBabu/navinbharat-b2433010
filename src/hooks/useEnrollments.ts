@@ -55,8 +55,21 @@ export const useEnrollments = () => {
         if (!u) return u ?? undefined;
         try { return await resolveContentUrl(u); } catch { return null; }
       };
+      interface EnrollmentQueryRow {
+        id: number;
+        user_id: string;
+        course_id: number;
+        purchased_at: string;
+        status: string;
+        courses?: {
+          id: number; title: string; description: string | null;
+          grade: string | null; price: number | null;
+          image_url?: string | null; thumbnail_url?: string | null;
+          created_at: string;
+        } | null;
+      }
       const settled = await Promise.allSettled(
-        (data || []).map(async (e: Record<string, unknown>): Promise<EnrollmentWithCourse> => ({
+        ((data || []) as unknown as EnrollmentQueryRow[]).map(async (e): Promise<EnrollmentWithCourse> => ({
           id: e.id,
           userId: e.user_id,
           courseId: e.course_id,

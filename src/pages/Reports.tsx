@@ -341,7 +341,7 @@ const Reports = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {enrollments.map((e) => (
+                {enrollments.map((e: (typeof enrollments)[number] & { progress_percentage?: number }) => (
                   <div key={e.id} className="space-y-1.5">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium truncate">{e.course?.title ?? "Course"}</span>

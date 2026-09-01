@@ -46,8 +46,16 @@ export const useLectureSchedules = () => {
 
       if (error) throw error;
 
+      interface ScheduleQueryRow {
+        id: string; course_id: string | null; chapter_id: string | null;
+        title: string; description: string | null;
+        scheduled_date: string; scheduled_time: string;
+        duration_minutes: number; meeting_link: string | null;
+        created_by: string | null; created_at: string;
+        courses?: { title: string | null } | null;
+      }
       setSchedules(
-        (data || []).map((s: Record<string, unknown>) => ({
+        ((data || []) as unknown as ScheduleQueryRow[]).map((s) => ({
           id: s.id,
           courseId: s.course_id,
           chapterId: s.chapter_id,
