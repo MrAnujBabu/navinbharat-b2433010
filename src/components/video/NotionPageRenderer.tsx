@@ -10,6 +10,8 @@ import { savePdfToDevice } from "../../lib/nativePdfSaver";
 import { useToast } from "../../hooks/use-toast";
 import { traceReader } from "../../lib/readerDiagnostics";
 import AutoScrollFab from "../viewer/AutoScrollFab";
+import { openResource } from "../../lib/openResource";
+
 
 
 
