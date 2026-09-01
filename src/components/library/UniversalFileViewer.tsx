@@ -119,14 +119,8 @@ export default function UniversalFileViewer(props: Props) {
       ? `https://player.vimeo.com/video/${vimeoMatch[1]}`
       : null;
 
-  // LINK kind: open externally and bounce back
-  useEffect(() => {
-    if (kind !== "LINK") return;
-    void openExternal(url);
-    setTimeout(onBack, 0);
-  }, [kind, url, onBack]);
-
   if (kind === "LINK") return null;
+
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
