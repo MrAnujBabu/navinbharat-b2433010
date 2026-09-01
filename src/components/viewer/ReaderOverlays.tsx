@@ -19,6 +19,8 @@ interface Props {
   bottomOffset?: number;
   onActiveChange?: (active: boolean) => void;
   visible?: boolean;
+  /** Keep the page chip on screen while the reader chrome is visible. */
+  pinned?: boolean;
   docKey?: string;
   /** Soft-keyboard height, so the debug panel never hides behind it. */
   keyboardInset?: number;
@@ -36,6 +38,7 @@ export default function ReaderOverlays({
   bottomOffset,
   onActiveChange,
   visible,
+  pinned,
   docKey,
   keyboardInset = 0,
 }: Props): JSX.Element {
@@ -49,7 +52,7 @@ export default function ReaderOverlays({
         visible={visible}
         docKey={docKey}
       />
-      <PageIndicatorPill targetRef={targetRef} iframeRef={iframeRef} />
+      <PageIndicatorPill targetRef={targetRef} iframeRef={iframeRef} pinned={pinned} />
       {readerDebugEnabled() && (
         <Suspense fallback={null}>
           <ReaderDebugPanel keyboardInset={keyboardInset} />

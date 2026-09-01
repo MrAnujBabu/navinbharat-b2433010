@@ -55,6 +55,8 @@ interface Props {
   iframeRef?: React.RefObject<HTMLIFrameElement | null>;
   /** Fade-out delay after the last scroll (ms). */
   idleMs?: number;
+  /** Keep the chip on screen regardless of idle (reader chrome is visible). */
+  pinned?: boolean;
 }
 
 interface PageState {
@@ -78,6 +80,7 @@ export default function PageIndicatorPill({
   targetRef,
   iframeRef,
   idleMs = 1200,
+  pinned = false,
 }: Props): JSX.Element | null {
   const host = usePortalHost();
   const [state, setState] = useState<PageState | null>(null);
@@ -433,7 +436,7 @@ export default function PageIndicatorPill({
   const label = `${state.first}/${state.total}`;
 
   // Keyboard focus keeps the pill visible and interactive even when idle.
-  const visible = shown || focused || dragging;
+  const visible = shown || focused || dragging || pinned;
   const surface =
     "rounded-full bg-foreground/85 text-background shadow-md backdrop-blur";
 
