@@ -54,21 +54,21 @@ const Students = () => {
         return;
       }
 
-      const userIds = Array.from(new Set((enrollments || []).map((e: any) => e.user_id).filter(Boolean)));
-      let profileMap = new Map<string, any>();
+      const userIds = Array.from(new Set((enrollments || []).map((e: { user_id: string }) => e.user_id).filter(Boolean)));
+      let profileMap = new Map<string, { id: string; full_name: string | null; email: string | null; mobile: string | null }>();
       if (userIds.length) {
         const { data: profs, error: profErr } = await supabase
           .from("profiles")
           .select("id, full_name, email, mobile")
           .in("id", userIds);
         if (profErr) logger.error("Error fetching students", profErr);
-        profileMap = new Map((profs || []).map((p: any) => [p.id, p]));
+        profileMap = new Map((profs || []).map((p) => [p.id, p]));
       }
 
       // Group by user
       const userMap = new Map<string, StudentProfile>();
       for (const e of (enrollments || [])) {
-        const userId = (e as any).user_id as string;
+        const userId = e.user_id;
         if (!userId) continue;
         const p = profileMap.get(userId);
         if (!userMap.has(userId)) {
@@ -80,7 +80,7 @@ const Students = () => {
             courseTitles: [],
           });
         }
-        const courseTitle = (e.courses as any)?.title;
+        const courseTitle = (e.courses as { title?: string } | null)?.title;
         if (courseTitle) userMap.get(userId)!.courseTitles.push(courseTitle);
       }
 

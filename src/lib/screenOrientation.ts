@@ -27,8 +27,9 @@ const isNativePlatform = (): boolean => {
 // "not implemented on android" because no such bridge method exists.
 // Wrap the proxy in a plain object so the Promise chain hands it back
 // untouched.
-let nativePluginPromise: Promise<{ plugin: any } | null> | null = null;
-function loadWrapped(): Promise<{ plugin: any } | null> {
+type OrientationPlugin = { lock: (opts: { orientation: Mode }) => Promise<void>; unlock: () => Promise<void> };
+let nativePluginPromise: Promise<{ plugin: OrientationPlugin } | null> | null = null;
+function loadWrapped(): Promise<{ plugin: OrientationPlugin } | null> {
   if (!isNativePlatform()) return Promise.resolve(null);
   if (!nativePluginPromise) {
     nativePluginPromise = import("@capacitor/screen-orientation")
@@ -55,7 +56,7 @@ export async function lockOrientation(mode: Mode): Promise<boolean> {
     /* fall through */
   }
   try {
-    const so: any = (screen as any).orientation;
+    const so = (screen as unknown as { orientation?: { lock?: (mode: Mode) => Promise<void> } }).orientation;
     if (so?.lock) {
       await so.lock(mode);
       return true;
@@ -78,7 +79,7 @@ export async function unlockOrientation(): Promise<void> {
     /* ignore */
   }
   try {
-    const so: any = (screen as any).orientation;
+    const so = (screen as unknown as { orientation?: { unlock?: () => void } }).orientation;
     if (so?.unlock) so.unlock();
   } catch {
     /* ignore */
