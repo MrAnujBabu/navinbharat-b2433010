@@ -66,7 +66,7 @@ const AdminAnalytics = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
-  const [tab, setTab] = useState<"learning" | "users" | "payments">("learning");
+  const [tab, setTab] = useState<AnalyticsTab>("learning");
   const [range, setRange] = useState<Range>(() => presetRange(30));
 
   // Data states
