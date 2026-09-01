@@ -1,3 +1,4 @@
+interface AttendanceQueryRow { id: number; student_id: string; date: string; status: string; created_at: string }
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../contexts/AuthContext";
@@ -45,7 +46,7 @@ export const useAttendance = (date?: string) => {
       const { data, error: dbError } = await query;
       if (dbError) throw dbError;
 
-      const formatted: Attendance[] = (data || []).map((a: Record<string, unknown>) => ({
+      const formatted: Attendance[] = ((data || []) as unknown as AttendanceQueryRow[]).map((a) => ({
         id: a.id,
         studentId: a.student_id,
         date: a.date,
@@ -72,7 +73,7 @@ export const useAttendance = (date?: string) => {
 
       if (dbError) throw dbError;
 
-      return (data || []).map((a: Record<string, unknown>) => ({
+      return ((data || []) as unknown as AttendanceQueryRow[]).map((a) => ({
         id: a.id,
         studentId: a.student_id,
         date: a.date,

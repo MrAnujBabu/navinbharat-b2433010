@@ -59,7 +59,7 @@ export function useBooks() {
       setBooks((data || []) as Book[]);
     } catch (err: unknown) {
       logger.error('Error fetching books:', err);
-      setError(err);
+      setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setIsLoading(false);
     }
@@ -134,7 +134,7 @@ export function useBooks() {
 
       const { error: dbError } = await supabase
         .from('books')
-        .update(updateData)
+        .update(updateData as never)
         .eq('id', id);
 
       if (dbError) throw dbError;

@@ -1,3 +1,4 @@
+interface CommentQueryRow { id: string; lesson_id: string; user_id: string; user_name: string | null; message: string; image_url: string | null; created_at: string }
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../contexts/AuthContext";
@@ -47,7 +48,7 @@ export const useComments = (lessonId?: string) => {
 
       if (dbError) throw dbError;
 
-      const formatted: Comment[] = (data || []).map((c: Record<string, unknown>) => ({
+      const formatted: Comment[] = ((data || []) as unknown as CommentQueryRow[]).map((c) => ({
         id: c.id,
         lessonId: c.lesson_id,
         userId: c.user_id ?? null,

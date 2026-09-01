@@ -52,7 +52,7 @@ export const BatchProvider = ({ children }: { children: ReactNode }) => {
         const enrolledBatches: Batch[] = (data || [])
           .map((e: { courses: unknown }) => e.courses)
           .filter(Boolean)
-          .filter((c: Record<string, unknown> | null) => {
+          .filter((c: { id: number; title: string; grade: string | null; image_url: string | null }) => {
             if (seen.has(c.id)) return false;
             seen.add(c.id);
             return true;
