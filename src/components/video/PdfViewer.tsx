@@ -308,6 +308,8 @@ const PdfViewerInner = forwardRef<PdfViewerHandle, PdfViewerProps>(
             initialPage={initialPage}
             onPageChange={onPageChange}
             onReady={onReady}
+            onZoomChange={onZoomChange}
+
           />
         </div>
       );
