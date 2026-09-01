@@ -85,7 +85,7 @@ const trace = (reason: string, extra: Record<string, unknown> = {}): void => {
       new URLSearchParams(window.location.search).has("debug") ||
       window.localStorage?.getItem("nb_pdf_debug") === "1";
     if (!on) return;
-    // eslint-disable-next-line no-console
+     
     console.log("[pdf-debug] resolved", { reason, ...extra });
   } catch { /* noop */ }
 };

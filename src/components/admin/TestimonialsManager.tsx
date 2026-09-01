@@ -51,8 +51,8 @@ const TestimonialsManager = () => {
       else setEditDraft((d) => ({ ...d, avatar_url: url }));
       setImportUrl("");
       toast.success("Image imported.");
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
     } finally {
       setImporting(false);
     }

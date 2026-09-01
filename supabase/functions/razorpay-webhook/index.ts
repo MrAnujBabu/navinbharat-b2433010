@@ -129,17 +129,37 @@ Deno.serve(async (req) => {
       });
     }
 
-    const razorpayOrderId = payment.order_id;
+    // ── QR / Smart-Collect support ──
+    // Razorpay QR-code (and UPI Smart Collect) payments are captured WITHOUT
+    // an `order_id` — they carry `qr_code_id` / `invoice_id` instead. Older
+    // versions rejected those outright, so a student who paid by scanning the
+    // QR never got auto-enrolled. We synthesise a stable pseudo order id from
+    // the payment id so the whole downstream pipeline (price validation,
+    // idempotency, complete_paid_enrollment RPC) works unchanged.
+    // The QR must be created with notes { user_id, course_id } — Razorpay
+    // copies qr_code notes onto the payment entity — and the amount must
+    // match the DB course price exactly, enforced below.
+    const qrSourceId = payment.qr_code_id || payment.invoice_id || null;
+    const razorpayOrderId = payment.order_id
+      || (qrSourceId ? `qr_${payment.id}` : null);
     const razorpayPaymentId = payment.id;
     const courseId = payment.notes?.course_id;
     const userId = payment.notes?.user_id;
 
     if (!razorpayOrderId || !razorpayPaymentId) {
-      console.error('Missing order_id or payment_id in webhook');
+      console.error('Missing order_id/qr_code_id or payment_id in webhook');
       return new Response(JSON.stringify({ error: 'Missing payment identifiers' }), {
         status: 400, headers: jsonHeaders
       });
     }
+
+    if (!payment.order_id) {
+      console.log('QR/Smart-Collect payment captured', {
+        payment_id: razorpayPaymentId, qr_source: qrSourceId,
+        course_id: courseId, has_user: Boolean(userId),
+      });
+    }
+
 
     // ── IDEMPOTENCY CHECK ──
     const { data: existingPayment } = await supabaseAdmin

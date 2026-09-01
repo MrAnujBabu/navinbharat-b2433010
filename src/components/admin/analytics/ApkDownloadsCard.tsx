@@ -34,8 +34,8 @@ export default function ApkDownloadsCard() {
       if (!res.ok) throw new Error(`GitHub API ${res.status}`);
       const data: Release[] = await res.json();
       setReleases(data);
-    } catch (e: any) {
-      setError(e.message ?? "Failed to load");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
     }

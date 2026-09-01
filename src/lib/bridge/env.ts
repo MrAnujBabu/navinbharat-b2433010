@@ -15,7 +15,7 @@ function required(key: string): string {
     // In dev, surface immediately; in prod, return empty string so the app
     // can render a friendly error instead of white-screening.
     if (raw.DEV) {
-      // eslint-disable-next-line no-console
+       
       console.error(`[env] missing required key: ${key}`);
     }
     return "";

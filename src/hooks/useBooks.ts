@@ -57,9 +57,9 @@ export function useBooks() {
 
       if (dbError) throw dbError;
       setBooks((data || []) as Book[]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error fetching books:', err);
-      setError(err);
+      setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +98,7 @@ export function useBooks() {
       if (dbError) throw dbError;
       toast({ title: 'Book added successfully!' });
       await fetchBooks();
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error adding book:', err);
       toast({ title: 'Failed to add book', variant: 'destructive' });
     } finally {
@@ -109,7 +109,7 @@ export function useBooks() {
   const updateBook = async ({ id, formData, coverFile }: { id: string; formData: BookFormData; coverFile?: File }) => {
     try {
       setIsUpdating(true);
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         title: formData.title,
         author: formData.author,
         description: formData.description,
@@ -134,13 +134,13 @@ export function useBooks() {
 
       const { error: dbError } = await supabase
         .from('books')
-        .update(updateData)
+        .update(updateData as never)
         .eq('id', id);
 
       if (dbError) throw dbError;
       toast({ title: 'Book updated successfully!' });
       await fetchBooks();
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error updating book:', err);
       toast({ title: 'Failed to update book', variant: 'destructive' });
     } finally {
@@ -159,7 +159,7 @@ export function useBooks() {
       if (dbError) throw dbError;
       toast({ title: 'Book deleted successfully!' });
       await fetchBooks();
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error deleting book:', err);
       toast({ title: 'Failed to delete book', variant: 'destructive' });
     } finally {

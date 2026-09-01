@@ -132,7 +132,7 @@ export function useLessonProgress(
         pendingRef.current = true;
       }
     },
-    [user?.id, lessonId, writeNow]
+    [userId, lessonId, writeNow]
   );
 
   const flush = useCallback(() => {

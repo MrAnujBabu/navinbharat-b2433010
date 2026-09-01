@@ -116,19 +116,19 @@ export default function PaymentsSection({ range }: Props) {
       const [{ data: courses }, { data: profiles }] = await Promise.all([
         courseIds.length
           ? supabase.from("courses").select("id, title").in("id", courseIds)
-          : Promise.resolve({ data: [] as any[] }),
+          : Promise.resolve({ data: [] as { id: number; title: string }[] }),
         userIds.length
           ? supabase.from("profiles").select("id, full_name").in("id", userIds)
-          : Promise.resolve({ data: [] as any[] }),
+          : Promise.resolve({ data: [] as { id: string; full_name: string | null }[] }),
       ]);
 
       if (cancelled) return;
       const cm: Record<number, string> = {};
-      (courses ?? []).forEach((c: any) => (cm[c.id] = c.title));
+      (courses ?? []).forEach((c: { id: number; title: string }) => (cm[c.id] = c.title));
       setCourseMap(cm);
 
       const um: Record<string, string> = {};
-      (profiles ?? []).forEach((p: any) => (um[p.id] = p.full_name ?? "—"));
+      (profiles ?? []).forEach((p: { id: string; full_name: string | null }) => (um[p.id] = p.full_name ?? "—"));
       setUserMap(um);
 
       setLoading(false);
@@ -218,7 +218,7 @@ export default function PaymentsSection({ range }: Props) {
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip
-                  formatter={(v: any) => fmtInr(Number(v))}
+                  formatter={(v: number | string) => fmtInr(Number(v))}
                   contentStyle={{
                     background: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
@@ -262,7 +262,7 @@ export default function PaymentsSection({ range }: Props) {
                     width={140}
                   />
                   <Tooltip
-                    formatter={(v: any) => fmtInr(Number(v))}
+                    formatter={(v: number | string) => fmtInr(Number(v))}
                     contentStyle={{
                       background: "hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",

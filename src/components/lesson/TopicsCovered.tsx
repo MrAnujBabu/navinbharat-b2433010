@@ -81,7 +81,7 @@ export function TopicsCovered({ lessonId, overview, isAdmin, onSaved, videoUrl }
       } else {
         toast.error("Is video ke liye timestamps nahi bane");
       }
-    } catch (err: any) {
+    } catch (err) {
       logger.error("AI timestamp error:", err);
       toast.error("Timestamps nahi bane — thodi der baad dobara try karo");
     } finally {

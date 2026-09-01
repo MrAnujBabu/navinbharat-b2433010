@@ -457,7 +457,7 @@ export function useLocalPdfSource(url: string, retryNonce = 0): LocalPdfState {
     };
     // `retryNonce` lets the reader re-run resolution in place (Retry button)
     // without a full page reload.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [url, retryNonce]);
 
   return state;

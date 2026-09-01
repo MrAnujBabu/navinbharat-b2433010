@@ -1,3 +1,4 @@
+interface BatchQueryRow { id: number; title: string; grade: string | null; image_url: string | null }
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode, useCallback } from "react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "./AuthContext";
@@ -50,14 +51,15 @@ export const BatchProvider = ({ children }: { children: ReactNode }) => {
         // Deduplicate by course id — same course may have multiple enrollment rows
         const seen = new Set<number>();
         const enrolledBatches: Batch[] = (data || [])
-          .map((e: any) => e.courses)
+          .map((e) => e.courses as unknown as BatchQueryRow | null)
           .filter(Boolean)
-          .filter((c: any) => {
+          .filter((c): c is BatchQueryRow => {
+            if (!c) return false;
             if (seen.has(c.id)) return false;
             seen.add(c.id);
             return true;
           })
-          .map((c: any) => ({
+          .map((c) => ({
             id: c.id,
             title: c.title,
             grade: c.grade,

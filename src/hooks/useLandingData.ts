@@ -13,7 +13,7 @@ export interface SiteStat {
 
 export interface LandingContent {
   sectionKey: string;
-  content: any;
+  content: unknown;
 }
 
 const DEFAULT_STATS: SiteStat[] = [
@@ -78,7 +78,7 @@ export const useLandingData = () => {
   );
 
   const getContentByKey = useCallback(
-    (key: string): any => {
+    (key: string): unknown => {
       const item = content.find((c) => c.sectionKey === key);
       return item?.content || null;
     },
@@ -90,8 +90,8 @@ export const useLandingData = () => {
       setLoading(true);
       setError(null);
       await Promise.all([fetchStats(), fetchContent()]);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }

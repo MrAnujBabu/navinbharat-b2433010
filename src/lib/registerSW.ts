@@ -65,7 +65,7 @@ export function registerServiceWorker(): void {
       .register("/sw.js", { scope: "/" })
       .catch((err) => {
         // Don't crash the app — offline support is progressive enhancement.
-        // eslint-disable-next-line no-console
+         
         console.warn("[sw] registration failed:", err);
       });
   });

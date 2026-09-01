@@ -40,9 +40,9 @@ const LeadForm = memo(() => {
       if (error) throw error;
       toast({ title: "Success", description: "Request received!" });
       setFormData({ studentName: "", email: "", grade: "" });
-    } catch (error: any) {
+    } catch (error) {
       reportError(error, { surface: "LeadForm.submit" });
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Something went wrong", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }

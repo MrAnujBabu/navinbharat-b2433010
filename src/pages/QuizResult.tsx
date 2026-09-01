@@ -13,6 +13,7 @@ import {
   Award, Minus, Zap, Timer, Sparkles, GraduationCap,
   AlertTriangle, Gauge, Flame, ShieldCheck,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "../lib/utils";
 import { QuizQuestionThumb } from "../components/quiz/QuizQuestionImage";
 import { isAnswerCorrect, normalizeMcqIndex } from "../lib/quizAnswer";
@@ -120,9 +121,9 @@ const QuizResult = () => {
 
         setQuiz(quizRes.data as Quiz);
         setQuestions(
-          (questionsRes.data || []).map((q: any) => ({
-            ...q,
-            options: Array.isArray(q.options) ? q.options : (q.options ? Object.values(q.options) : null),
+          ((questionsRes.data || []) as Array<Record<string, unknown>>).map((q) => ({
+            ...(q as unknown as Question),
+            options: Array.isArray(q.options) ? (q.options as string[]) : (q.options ? Object.values(q.options as Record<string, unknown>) as string[] : null),
           }))
         );
         setAttempt(attemptData);
@@ -136,14 +137,15 @@ const QuizResult = () => {
           .lte("submitted_at", attemptData.submitted_at);
         setAttemptNumber(count || 1);
 
-      } catch (err: any) {
-        toast.error(err.message);
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : String(err));
         navigate("/all-tests");
       } finally {
         setLoading(false);
       }
     };
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- navigate identity is stable from react-router; adding it would not change behavior but is omitted intentionally to keep this effect scoped to route param changes
   }, [quizId, attemptId]);
 
   // Compute live rank against all other students' best attempts on this quiz
@@ -166,6 +168,7 @@ const QuizResult = () => {
       setRank(higher + 1);
       setTotalParticipants(bestByUser.size);
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on attempt?.id (not the whole `attempt` object) to avoid re-running the rank computation on unrelated attempt reference changes
   }, [quizId, attempt?.id]);
 
   const formatTime = (seconds: number) => {
@@ -309,7 +312,7 @@ const QuizResult = () => {
             : { label: "Balanced Pace", tone: "text-primary", icon: Gauge };
 
   // Strategy tips (rule-based, max 4)
-  const tips: { icon: any; text: string; tone: string }[] = [];
+  const tips: { icon: LucideIcon; text: string; tone: string }[] = [];
   if (totalQ > 0 && skippedCount / totalQ > 0.3) {
     tips.push({
       icon: Sparkles,
@@ -947,8 +950,8 @@ const QuizResult = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground mb-1">Q{idx + 1}</p>
-                      {(q as any).image_url && (
-                        <QuizQuestionThumb src={(q as any).image_url} />
+                      {q.image_url && (
+                        <QuizQuestionThumb src={q.image_url} />
                       )}
                       <p className="text-sm font-medium text-foreground line-clamp-2">{q.question_text}</p>
                     </div>

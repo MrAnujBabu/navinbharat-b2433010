@@ -41,16 +41,16 @@ const SyllabusPage = () => {
 
         if (error) throw error;
 
-        const mapped: SyllabusItem[] = (data || []).map((s: any) => ({
-          id: s.id,
-          courseId: s.course_id,
-          title: s.title,
-          description: s.description,
-          weekNumber: s.week_number,
-          topics: s.topics,
-          createdAt: s.created_at,
-          courseTitle: s.courses?.title || "Unknown Course",
-          courseGrade: s.courses?.grade,
+        const mapped: SyllabusItem[] = ((data || []) as Array<Record<string, unknown>>).map((s) => ({
+          id: s.id as string,
+          courseId: s.course_id as number,
+          title: s.title as string,
+          description: s.description as string | null,
+          weekNumber: s.week_number as number | null,
+          topics: s.topics as string[] | null,
+          createdAt: s.created_at as string,
+          courseTitle: (s.courses as { title?: string; grade?: string } | null)?.title || "Unknown Course",
+          courseGrade: (s.courses as { title?: string; grade?: string } | null)?.grade,
         }));
 
         setSyllabus(mapped);

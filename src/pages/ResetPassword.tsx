@@ -84,9 +84,9 @@ const ResetPassword = () => {
       setTimeout(() => {
         navigate("/login");
       }, 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       reportError(err, { surface: "ResetPassword.update" });
-      toast.error(err.message || "Failed to update password");
+      toast.error((err instanceof Error ? err.message : null) || "Failed to update password");
     } finally {
       setIsLoading(false);
     }

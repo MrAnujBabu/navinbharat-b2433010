@@ -70,7 +70,7 @@ export const useCreateLandingCourse = () => {
       qc.invalidateQueries({ queryKey: ["landing_courses"] });
       toast.success("Course added!");
     },
-    onError: (e: any) => toast.error("Add failed: " + e.message),
+    onError: (e: unknown) => toast.error("Add failed: " + (e instanceof Error ? e.message : String(e))),
   });
 };
 
@@ -88,7 +88,7 @@ export const useUpdateLandingCourse = () => {
       qc.invalidateQueries({ queryKey: ["landing_courses"] });
       toast.success("Saved.");
     },
-    onError: (e: any) => toast.error("Save failed: " + e.message),
+    onError: (e: unknown) => toast.error("Save failed: " + (e instanceof Error ? e.message : String(e))),
   });
 };
 
@@ -103,7 +103,7 @@ export const useDeleteLandingCourse = () => {
       qc.invalidateQueries({ queryKey: ["landing_courses"] });
       toast.success("Deleted.");
     },
-    onError: (e: any) => toast.error("Delete failed: " + e.message),
+    onError: (e: unknown) => toast.error("Delete failed: " + (e instanceof Error ? e.message : String(e))),
   });
 };
 

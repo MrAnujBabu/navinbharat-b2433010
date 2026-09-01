@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { getCached, setCached, invalidateCache, TTL } from "@/lib/ttlCache";
+import type { Tables } from "@/integrations/supabase/types";
 
 const cacheKey = (courseId?: number) => `lessons:course:${courseId ?? "none"}:v2`;
 
@@ -40,7 +41,11 @@ export interface LessonInput {
   position?: number;
 }
 
-function mapLesson(l: any): LessonWithCourse {
+type LessonRow = Tables<"lessons"> & {
+  courses?: { title: string; grade: string | null } | null;
+};
+
+function mapLesson(l: LessonRow): LessonWithCourse {
   return {
     id: l.id,
     courseId: l.course_id ?? null,
@@ -90,12 +95,12 @@ export const useLessons = (courseId?: number) => {
         .limit(200); // Bandwidth cap — no course expected >200 lessons; prevents runaway payload.
 
       if (dbError) throw dbError;
-      const mapped = (data || []).map(mapLesson);
+      const mapped = ((data || []) as unknown as LessonRow[]).map(mapLesson);
       setLessons(mapped);
       setCached(cacheKey(courseId), mapped);
-    } catch (err: any) {
+    } catch (err) {
       logger.error("Error fetching lessons:", err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Failed to fetch lessons");
       toast.error("Lessons load nahi hue — refresh karo");
     } finally {
       setLoading(false);
@@ -112,7 +117,7 @@ export const useLessons = (courseId?: number) => {
 
       if (dbError || !data) return null;
       return mapLesson(data);
-    } catch (err: any) {
+    } catch (err) {
       logger.error("Error fetching lesson:", err);
       toast.error("Lesson load nahi hui — refresh karo");
       return null;
@@ -146,12 +151,12 @@ export const useLessons = (courseId?: number) => {
       toast.success("Lesson created");
       invalidateCache(cacheKey(courseId)); await fetchLessons(true);
       return mapLesson(data);
-    } catch (err: any) {
+    } catch (err) {
       logger.error("Error creating lesson:", err);
       toast.error("Lesson create nahi hui — dobara try karo");
       return null;
     }
-  }, [user, isAdmin, isTeacher, fetchLessons]);
+  }, [user, isAdmin, isTeacher, fetchLessons, courseId]);
 
   const updateLesson = useCallback(async (id: string, input: Partial<LessonInput>): Promise<boolean> => {
     if (!user || (!isAdmin && !isTeacher)) {
@@ -160,7 +165,7 @@ export const useLessons = (courseId?: number) => {
     }
 
     try {
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
       if (input.courseId !== undefined) updateData.course_id = input.courseId;
       if (input.title !== undefined) updateData.title = input.title;
       if (input.description !== undefined) updateData.description = input.description;
@@ -173,19 +178,19 @@ export const useLessons = (courseId?: number) => {
 
       const { error: dbError } = await supabase
         .from("lessons")
-        .update(updateData)
+        .update(updateData as never)
         .eq("id", id);
 
       if (dbError) throw dbError;
       toast.success("Lesson updated");
       invalidateCache(cacheKey(courseId)); await fetchLessons(true);
       return true;
-    } catch (err: any) {
+    } catch (err) {
       logger.error("Error updating lesson:", err);
       toast.error("Lesson update nahi hui — dobara try karo");
       return false;
     }
-  }, [user, isAdmin, isTeacher, fetchLessons]);
+  }, [user, isAdmin, isTeacher, fetchLessons, courseId]);
 
   const deleteLesson = useCallback(async (id: string): Promise<boolean> => {
     if (!user || (!isAdmin && !isTeacher)) {
@@ -203,12 +208,12 @@ export const useLessons = (courseId?: number) => {
       toast.success("Lesson deleted");
       invalidateCache(cacheKey(courseId)); await fetchLessons(true);
       return true;
-    } catch (err: any) {
+    } catch (err) {
       logger.error("Error deleting lesson:", err);
       toast.error("Delete nahi hua — dobara try karo");
       return false;
     }
-  }, [user, isAdmin, isTeacher, fetchLessons]);
+  }, [user, isAdmin, isTeacher, fetchLessons, courseId]);
 
   useEffect(() => {
     fetchLessons();

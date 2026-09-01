@@ -15,7 +15,7 @@ interface LectureTableViewProps {
   }[];
   hasPurchased: boolean;
   isAdminOrTeacher: boolean;
-  onLectureClick: (lesson: any) => void;
+  onLectureClick: (lesson: LectureTableViewProps["lessons"][number]) => void;
   lessonQuizMap?: Record<string, string>;
 }
 

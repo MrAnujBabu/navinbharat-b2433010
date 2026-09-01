@@ -63,7 +63,7 @@ export function pdfLog(event: PdfLogEvent, fields: Fields = {}): void {
     /* ignore breadcrumb failures */
   }
   if (!isPdfDebug()) return;
-  // eslint-disable-next-line no-console
+   
   console.info(`[pdf:${event}]`, payload);
 }
 
@@ -77,6 +77,6 @@ export function pdfLogError(event: PdfLogEvent, err: unknown, fields: Fields = {
     /* ignore */
   }
   if (!isPdfDebug()) return;
-  // eslint-disable-next-line no-console
+   
   console.error(`[pdf:${event}]`, payload);
 }

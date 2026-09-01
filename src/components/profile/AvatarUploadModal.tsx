@@ -158,7 +158,7 @@ const AvatarUploadModal = ({ isOpen, onClose, userId, currentAvatarUrl, fullName
       onUploadComplete(publicUrl);
       toast.success("Avatar updated!");
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       reportError(err, { surface: "AvatarUploadModal.upload" });
       toast.error("Failed to upload avatar");
     } finally {
@@ -178,7 +178,7 @@ const AvatarUploadModal = ({ isOpen, onClose, userId, currentAvatarUrl, fullName
       onUploadComplete(null);
       toast.success("Avatar removed");
       onClose();
-    } catch (err: any) {
+    } catch {
       toast.error("Failed to remove avatar");
     } finally {
       setUploading(false);
@@ -229,8 +229,8 @@ const AvatarUploadModal = ({ isOpen, onClose, userId, currentAvatarUrl, fullName
                   }
                   setSelectedFile(file);
                   setPreviewSafely(URL.createObjectURL(file));
-                } catch (e: any) {
-                  toast.error(e?.message ?? "Camera unavailable");
+                } catch (e: unknown) {
+                  toast.error(e instanceof Error ? e.message : "Camera unavailable");
                 }
               }}
               disabled={uploading}

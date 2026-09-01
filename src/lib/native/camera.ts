@@ -59,7 +59,7 @@ async function ensurePermissions(
     console.warn("[camera] checkPermissions failed", e);
     perm = {} as Record<string, string>;
   }
-  const missing = needed.filter((k) => (perm as any)[k] !== "granted");
+  const missing = needed.filter((k) => (perm as Record<string, string>)[k] !== "granted");
   if (!missing.length) return;
   let req;
   try {
@@ -74,7 +74,7 @@ async function ensurePermissions(
     );
   }
   for (const k of missing) {
-    if ((req as any)[k] !== "granted") {
+    if ((req as Record<string, string>)[k] !== "granted") {
       const kind = k === "camera" ? "camera" : "photos";
       throw new CameraPermissionError(
         kind === "camera"
@@ -109,7 +109,7 @@ export async function pickPhoto(source: PickSource = "camera"): Promise<File | n
         correctOrientation: true,
         presentationStyle: "fullscreen",
       });
-      const uri = photo?.webPath || (photo as any)?.path;
+      const uri = photo?.webPath || (photo as { path?: string })?.path;
       if (!uri) return null;
       const prefix = source === "camera" ? "scan" : "photo";
       const mime = photo.format ? `image/${photo.format}` : "image/jpeg";
@@ -123,8 +123,8 @@ export async function pickPhoto(source: PickSource = "camera"): Promise<File | n
         toast.error("Couldn't read the captured photo. Please try again.");
         return null;
       }
-    } catch (e: any) {
-      const msg = String(e?.message ?? e ?? "");
+    } catch (e: unknown) {
+      const msg = String(e instanceof Error ? e.message : e ?? "");
       if (/cancel/i.test(msg) || /User cancelled/i.test(msg)) return null;
       if (e instanceof CameraPermissionError) {
         toast.error(e.message);

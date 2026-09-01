@@ -55,7 +55,7 @@ export const useMessages = () => {
 
       if (fetchError) throw fetchError;
 
-      const allMessages: MessageWithProfiles[] = (data || []).map((m: any) => ({
+      const allMessages: MessageWithProfiles[] = (data || []).map((m: { id: string; sender_id: string; recipient_id: string; content: string; is_read: boolean; created_at: string }) => ({
         id: m.id,
         senderId: m.sender_id,
         recipientId: m.recipient_id,
@@ -71,9 +71,9 @@ export const useMessages = () => {
       setInbox(inboxMessages);
       setSent(sentMessages);
       setUnreadCount(inboxMessages.filter((m) => !m.isRead).length);
-    } catch (err: any) {
+    } catch (err) {
       logger.error("Error fetching messages:", err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Failed to fetch messages");
     } finally {
       setLoading(false);
     }
@@ -101,9 +101,9 @@ export const useMessages = () => {
       toast.success("Message sent successfully!");
       await fetchMessages();
       return true;
-    } catch (err: any) {
+    } catch (err) {
       logger.error("Error sending message:", err);
-      toast.error(err.message || "Failed to send message");
+      toast.error(err instanceof Error ? err.message : "Failed to send message");
       return false;
     }
   }, [userId, fetchMessages]);
@@ -112,7 +112,7 @@ export const useMessages = () => {
     try {
       await supabase.from("messages").update({ is_read: true }).eq("id", messageId);
       await fetchMessages();
-    } catch (err: any) {
+    } catch (err) {
       logger.error("Error marking message as read:", err);
     }
   }, [fetchMessages]);

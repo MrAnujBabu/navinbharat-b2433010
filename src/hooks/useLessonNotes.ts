@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import type { Tables } from "../integrations/supabase/types";
 import { supabase } from "../integrations/supabase/client";
 import { isGoogleDocs, isGoogleDrive, isNotion } from "../lib/pdfViewerUrl";
 import { resolveContentUrl, extractContentPath } from "../lib/resolveContentUrl";
@@ -152,7 +153,7 @@ export const useLessonNotes = (lessonId?: string) => {
       }
 
 
-      (pdfsRes.data || []).forEach((p: any) => {
+      (pdfsRes.data || []).forEach((p: Tables<"lesson_pdfs">) => {
         if (seenUrls.has(p.file_url)) return;
         seenUrls.add(p.file_url);
         merged.push({
@@ -168,7 +169,7 @@ export const useLessonNotes = (lessonId?: string) => {
         });
       });
 
-      (attRes.data || []).forEach((a: any) => {
+      (attRes.data || []).forEach((a: Tables<"lesson_attachments">) => {
         if (seenUrls.has(a.file_url)) return;
         seenUrls.add(a.file_url);
         merged.push({

@@ -73,8 +73,8 @@ export default function LandingCoursesManager() {
       setImportUrl("");
       setImportTargetId(null);
       toast.success("Image imported.");
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
     } finally {
       setImporting(false);
     }
@@ -87,7 +87,7 @@ export default function LandingCoursesManager() {
 
   const saveEdit = async () => {
     if (!editingId) return;
-    const { id: _id, created_at, updated_at, ...rest } = editForm as any;
+    const { id: _id, created_at, updated_at, ...rest } = editForm as Partial<LandingCourse>;
     await update.mutateAsync({ id: editingId, ...rest });
     setEditingId(null);
     setEditForm({});

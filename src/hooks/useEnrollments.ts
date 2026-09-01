@@ -55,8 +55,21 @@ export const useEnrollments = () => {
         if (!u) return u ?? undefined;
         try { return await resolveContentUrl(u); } catch { return null; }
       };
+      interface EnrollmentQueryRow {
+        id: number;
+        user_id: string;
+        course_id: number;
+        purchased_at: string;
+        status: string;
+        courses?: {
+          id: number; title: string; description: string | null;
+          grade: string | null; price: number | null;
+          image_url?: string | null; thumbnail_url?: string | null;
+          created_at: string;
+        } | null;
+      }
       const settled = await Promise.allSettled(
-        (data || []).map(async (e: any): Promise<EnrollmentWithCourse> => ({
+        ((data || []) as unknown as EnrollmentQueryRow[]).map(async (e): Promise<EnrollmentWithCourse> => ({
           id: e.id,
           userId: e.user_id,
           courseId: e.course_id,
@@ -82,9 +95,9 @@ export const useEnrollments = () => {
       setEnrollments(formatted);
       setEnrolledCourseIds(formatted.filter(e => e.status === 'active').map((e) => e.courseId));
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error fetching enrollments:", err);
-      if (aliveRef.current) setError(err.message);
+      if (aliveRef.current) setError(err instanceof Error ? err.message : String(err));
     } finally {
       if (aliveRef.current) setLoading(false);
     }
@@ -107,7 +120,7 @@ export const useEnrollments = () => {
         .maybeSingle();
 
       return !!data;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error checking enrollment:", err);
       return false;
     }
@@ -157,9 +170,9 @@ export const useEnrollments = () => {
       }
       await fetchEnrollments();
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error enrolling in course:", err);
-      toast.error(err.message || "Failed to enroll");
+      toast.error(err instanceof Error ? err.message : String(err) || "Failed to enroll");
       return false;
     }
   }, [user, fetchEnrollments]);
@@ -181,9 +194,9 @@ export const useEnrollments = () => {
       toast.success("Enrollment cancelled");
       await fetchEnrollments();
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error cancelling enrollment:", err);
-      toast.error(err.message || "Failed to cancel enrollment");
+      toast.error(err instanceof Error ? err.message : String(err) || "Failed to cancel enrollment");
       return false;
     }
   }, [user, fetchEnrollments]);

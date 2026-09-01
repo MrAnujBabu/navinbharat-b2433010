@@ -152,9 +152,9 @@ const openNative = async (): Promise<NativeImpl> => {
         bytes_total: r.blob?.size ?? null,
         error: null,
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       await upsert({ lesson_id: lessonId, title, status: 'failed', progress: 0,
-        local_path: null, bytes_total: null, error: String(e?.message ?? e) });
+        local_path: null, bytes_total: null, error: String(e instanceof Error ? e.message : e) });
     }
   };
 

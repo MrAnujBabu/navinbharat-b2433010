@@ -1,3 +1,4 @@
+interface AttendanceQueryRow { id: number; student_id: number; date: string; status: string; created_at: string }
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../contexts/AuthContext";
@@ -45,7 +46,7 @@ export const useAttendance = (date?: string) => {
       const { data, error: dbError } = await query;
       if (dbError) throw dbError;
 
-      const formatted: Attendance[] = (data || []).map((a: any) => ({
+      const formatted: Attendance[] = ((data || []) as unknown as AttendanceQueryRow[]).map((a) => ({
         id: a.id,
         studentId: a.student_id,
         date: a.date,
@@ -54,9 +55,9 @@ export const useAttendance = (date?: string) => {
       }));
 
       if (aliveRef.current) setAttendance(formatted);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error fetching attendance:", err);
-      if (aliveRef.current) setError(err.message);
+      if (aliveRef.current) setError(err instanceof Error ? err.message : String(err));
     } finally {
       if (aliveRef.current) setLoading(false);
     }
@@ -72,14 +73,14 @@ export const useAttendance = (date?: string) => {
 
       if (dbError) throw dbError;
 
-      return (data || []).map((a: any) => ({
+      return ((data || []) as unknown as AttendanceQueryRow[]).map((a) => ({
         id: a.id,
         studentId: a.student_id,
         date: a.date,
         status: a.status,
         createdAt: a.created_at,
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error fetching student attendance:", err);
       return [];
     }
@@ -103,7 +104,7 @@ export const useAttendance = (date?: string) => {
       toast.success("Attendance marked");
       await fetchAttendance();
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error marking attendance:", err);
       toast.error("Attendance save nahi hui — dobara try karo");
       return false;
@@ -129,7 +130,7 @@ export const useAttendance = (date?: string) => {
       toast.success("Attendance saved");
       await fetchAttendance();
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error in bulk attendance:", err);
       toast.error("Kuch records save nahi hue — dobara try karo");
       return false;

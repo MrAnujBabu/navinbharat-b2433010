@@ -47,7 +47,7 @@ const SyllabusManager = () => {
       supabase.from("syllabus").select("*, courses:course_id(title)").order("week_number", { ascending: true }),
       supabase.from("courses").select("id, title"),
     ]);
-    setEntries((syllabusData || []).map((s: any) => ({ ...s, courseTitle: s.courses?.title })));
+    setEntries((syllabusData || []).map((s: SyllabusEntry & { courses?: { title?: string } | null }) => ({ ...s, courseTitle: s.courses?.title })));
     setCourses(coursesData || []);
     setLoading(false);
   };

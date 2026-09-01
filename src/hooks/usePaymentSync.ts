@@ -58,7 +58,7 @@ export function usePaymentSync({ courseId, hasPurchased, loading, refetch }: Opt
     setSyncing(false);
     toast.success("🎉 Course unlocked — happy learning!");
     stripParam();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [isPaymentReturn, hasPurchased]);
 
   // Reconcile loop — only while we're waiting for the webhook to land.
@@ -96,7 +96,7 @@ export function usePaymentSync({ courseId, hasPurchased, loading, refetch }: Opt
       cancelled = true;
       window.clearTimeout(timer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [isPaymentReturn, hasPurchased, loading, courseId]);
 
   return { syncing: syncing && !hasPurchased };

@@ -19,6 +19,14 @@ type ChartContextProps = {
 
 const ChartContext = React.createContext<ChartContextProps | null>(null);
 
+type ChartPayloadItem = {
+  dataKey?: string | number;
+  name?: string | number;
+  value?: number | string;
+  color?: string;
+  payload?: { fill?: string } & Record<string, unknown>;
+};
+
 function useChart() {
   const context = React.useContext(ChartContext);
 
@@ -98,10 +106,16 @@ const ChartTooltipContent = React.forwardRef<
       indicator?: "line" | "dot" | "dashed";
       nameKey?: string;
       labelKey?: string;
-      payload?: any[];
-      label?: any;
-      labelFormatter?: (value: any, payload: any[]) => React.ReactNode;
-      formatter?: (...args: any[]) => React.ReactNode;
+      payload?: ChartPayloadItem[];
+      label?: React.ReactNode;
+      labelFormatter?: (value: React.ReactNode, payload: ChartPayloadItem[]) => React.ReactNode;
+      formatter?: (
+        value: ChartPayloadItem["value"],
+        name: ChartPayloadItem["name"],
+        item: ChartPayloadItem,
+        index: number,
+        payload: ChartPayloadItem["payload"],
+      ) => React.ReactNode;
       color?: string;
     }
 >(
@@ -236,7 +250,7 @@ const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> &
     {
-      payload?: any[];
+      payload?: ChartPayloadItem[];
       verticalAlign?: "top" | "bottom";
       hideIcon?: boolean;
       nameKey?: string;

@@ -12,16 +12,16 @@ import { reportError } from "@/lib/sentry";
 type Ctx = Record<string, unknown> | undefined;
 
 export function logInfo(message: string, ctx?: Ctx): void {
-  // eslint-disable-next-line no-console
+   
   if (ctx) console.info(`[info] ${message}`, ctx);
-  // eslint-disable-next-line no-console
+   
   else console.info(`[info] ${message}`);
 }
 
 export function logWarn(message: string, ctx?: Ctx): void {
-  // eslint-disable-next-line no-console
+   
   if (ctx) console.warn(`[warn] ${message}`, ctx);
-  // eslint-disable-next-line no-console
+   
   else console.warn(`[warn] ${message}`);
 }
 
@@ -29,7 +29,7 @@ export function logError(err: unknown, ctx?: Ctx & { surface?: string }): void {
   try {
     reportError(err, ctx);
   } catch {
-    // eslint-disable-next-line no-console
+     
     console.error("[error]", err, ctx);
   }
 }

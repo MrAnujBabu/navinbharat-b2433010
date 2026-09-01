@@ -72,10 +72,10 @@ export const useAdminEnrollment = () => {
         alreadyEnrolled: false,
         data: { id: enrollment.id, courseId },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       reportError(error, { surface: 'useAdminEnrollment.enroll' });
       toast.error('Enroll nahi ho paaya — dobara try karo');
-      return { success: false, error: error.message };
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     } finally {
       setIsEnrolling(false);
     }

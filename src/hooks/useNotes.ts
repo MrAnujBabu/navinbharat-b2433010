@@ -28,9 +28,9 @@ export const useNotes = (lessonId?: number) => {
       setLoading(true);
       setError(null);
       setNotes([]);
-    } catch (err: any) {
+    } catch (err) {
       reportError(err, { surface: "useNotes.fetch", lessonId });
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Failed to fetch notes");
     } finally {
       setLoading(false);
     }
@@ -43,12 +43,12 @@ export const useNotes = (lessonId?: number) => {
     }
     toast.success("Note added!");
     return true;
-  }, [isAdmin, isTeacher, fetchNotes]);
+  }, [isAdmin, isTeacher]);
 
   const deleteNote = useCallback(async (id: number): Promise<boolean> => {
     toast.success("Note deleted!");
     return true;
-  }, [fetchNotes]);
+  }, []);
 
   useEffect(() => {
     fetchNotes();

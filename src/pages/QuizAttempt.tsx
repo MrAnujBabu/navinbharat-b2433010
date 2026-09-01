@@ -92,22 +92,22 @@ const QuizAttempt = () => {
         if (questionsRes.error) throw questionsRes.error;
 
         setQuiz(quizRes.data as Quiz);
-        const qs = (questionsRes.data || []).map((q: any) => ({
-          ...q,
-          options: Array.isArray(q.options) ? q.options : (q.options ? Object.values(q.options) : null),
+        const qs = ((questionsRes.data || []) as Array<Record<string, unknown>>).map((q) => ({
+          ...(q as unknown as Question),
+          options: Array.isArray(q.options) ? (q.options as string[]) : (q.options ? Object.values(q.options as Record<string, unknown>) as string[] : null),
         }));
         setQuestions(qs);
 
         // Attempt record is created only on submit to avoid orphan rows
-      } catch (err: any) {
-        toast.error("Failed to load quiz: " + err.message);
+      } catch (err: unknown) {
+        toast.error("Failed to load quiz: " + (err instanceof Error ? err.message : String(err)));
         navigate(-1);
       } finally {
         setLoading(false);
       }
     };
     fetchQuizData();
-  }, [quizId, user]);
+  }, [quizId, user, navigate]);
 
   const saveAnswerToLocal = useCallback((newAnswers: Record<string, string>) => {
     if (answersKey) safeSet(answersKey, JSON.stringify(newAnswers));
@@ -154,10 +154,10 @@ const QuizAttempt = () => {
       if (flaggedKey) safeRemove(flaggedKey);
 
       navigate(`/quiz/${quizId}/result/${data.attempt_id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Allow retry after failure
       submittedRef.current = false;
-      toast.error("Submit failed: " + (err.message ?? "Unknown error"));
+      toast.error("Submit failed: " + (err instanceof Error ? err.message : "Unknown error"));
     } finally {
       setSubmitting(false);
     }

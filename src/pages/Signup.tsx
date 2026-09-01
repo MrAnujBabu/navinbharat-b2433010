@@ -150,14 +150,15 @@ const Signup = () => {
       }
       // else: auto-confirmed — useEffect handles navigation
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (!aliveRef.current || controller.signal.aborted) return;
       reportError(error, { surface: "Signup.submit" });
-      const isNetwork = /network|fetch|timeout|abort|timed|connection/i.test(error.message || "");
+      const message = error instanceof Error ? error.message : "";
+      const isNetwork = /network|fetch|timeout|abort|timed|connection/i.test(message);
       setIsNetworkError(isNetwork);
       setErrorMessage(isNetwork
         ? "Network error — check your internet connection and try again."
-        : (error.message || "Failed to create account"));
+        : (message || "Failed to create account"));
     } finally {
       if (aliveRef.current && !controller.signal.aborted) setIsLoading(false);
     }
@@ -195,7 +196,7 @@ const Signup = () => {
               <div className="flex-1">
                 <p className="text-sm text-destructive">{errorMessage}</p>
                 {isNetworkError && (
-                  <Button type="button" variant="outline" size="sm" className="mt-2 gap-1.5" onClick={handleSubmit as any}>
+                  <Button type="button" variant="outline" size="sm" className="mt-2 gap-1.5" onClick={() => handleSubmit({ preventDefault: () => {} } as unknown as React.FormEvent)}>
                     <RefreshCw className="h-3.5 w-3.5" /> Retry
                   </Button>
                 )}

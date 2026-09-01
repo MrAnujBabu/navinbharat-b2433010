@@ -103,7 +103,7 @@ export async function initSentry(): Promise<void> {
     if (import.meta.env.PROD && !getDsn() && !warnedMissingDsn) {
       warnedMissingDsn = true;
       if (safeGet("nb_sentry_debug") === "1") {
-        // eslint-disable-next-line no-console
+         
         console.info("[sentry] disabled: VITE_SENTRY_DSN missing");
       }
     }
