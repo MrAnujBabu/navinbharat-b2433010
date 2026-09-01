@@ -7,7 +7,18 @@ import type { Database } from "@/integrations/supabase/types";
 type DbPaymentRequestRow = Database['public']['Tables']['payment_requests']['Row'];
 type DbRazorpayPaymentRow = Database['public']['Tables']['razorpay_payments']['Row'];
 type PaymentRequestRow = DbPaymentRequestRow & { courses: { title: string | null } | null; profiles: DbProfile | null };
-type RazorpayPaymentRow = DbRazorpayPaymentRow & { profiles: DbProfile | null };
+type RazorpayPaymentRow = DbRazorpayPaymentRow & { courses: { title: string | null } | null; profiles: DbProfile | null };
+type UnifiedPayment = (PaymentRequestRow | RazorpayPaymentRow) & {
+  _method: 'upi' | 'razorpay';
+  _key: string;
+  _displayName: string;
+  _email: string;
+  _course: string;
+  _amount: number | null;
+  _status: string | null;
+  _date: string | null;
+  _ref: string;
+};
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { openResource } from "@/lib/openResource";
 import { supabase } from "../integrations/supabase/client";
@@ -254,21 +265,23 @@ const Admin = () => {
       _displayName: p.profiles?.full_name || p.sender_name || p.user_name || 'Unknown',
       _email: p.profiles?.email || '', _course: p.courses?.title || 'Unknown Course',
       _amount: p.amount, _status: p.status, _date: p.created_at,
+      _ref: p.transaction_id || '',
     }));
     const rzp = razorpayPayments.map(p => ({
       ...p, _method: 'razorpay' as const, _key: `rzp-${p.id}`,
       _displayName: p.profiles?.full_name || 'Online Payment',
       _email: p.profiles?.email || '', _course: p.courses?.title || 'Unknown Course',
       _amount: p.amount, _status: p.status, _date: p.created_at,
+      _ref: p.razorpay_payment_id || '',
     }));
-    return [...manual, ...rzp].sort((a, b) => new Date(b._date).getTime() - new Date(a._date).getTime());
+    return [...manual, ...rzp].sort((a, b) => new Date(b._date ?? 0).getTime() - new Date(a._date ?? 0).getTime());
   }, [payments, razorpayPayments]);
 
   const filteredPayments = useMemo(() => {
     const s = paymentSearch.toLowerCase();
     return allPaymentsUnified.filter(p => {
       const matchesSearch = !s || p._displayName.toLowerCase().includes(s) || p._email.toLowerCase().includes(s) ||
-        p._course.toLowerCase().includes(s) || (p.transaction_id?.toLowerCase().includes(s)) || (p.razorpay_payment_id?.toLowerCase().includes(s));
+        p._course.toLowerCase().includes(s) || p._ref.toLowerCase().includes(s);
       const matchesStatus = paymentStatusFilter === "all" || p._status === paymentStatusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -390,12 +403,12 @@ const Admin = () => {
   };
 
   // --- REFUND CONFIRMATION DIALOG STATE ---
-  const [refundConfirmPayment, setRefundConfirmPayment] = useState<RazorpayPaymentRow | null>(null);
+  const [refundConfirmPayment, setRefundConfirmPayment] = useState<UnifiedPayment | null>(null);
   const [refundConfirmText, setRefundConfirmText] = useState("");
   // Blank = full refund (historical behaviour). Rupees, converted to paise.
   const [refundAmountText, setRefundAmountText] = useState("");
 
-  const openRefundDialog = (payment: RazorpayPaymentRow) => {
+  const openRefundDialog = (payment: UnifiedPayment) => {
     setRefundConfirmPayment(payment);
     setRefundConfirmText("");
     setRefundAmountText("");
@@ -777,7 +790,7 @@ const Admin = () => {
                     <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredPayments.map(p => ({
                       method: p._method === 'razorpay' ? 'Razorpay' : 'UPI Manual',
                       name: p._displayName, course: p._course, amount: p._amount, status: p._status, date: p._date,
-                      ref: p.transaction_id || p.razorpay_payment_id || '',
+                      ref: p._ref,
                     })), 'payments')}>
                       <Download className="h-4 w-4 mr-1" /> Export
                     </Button>
