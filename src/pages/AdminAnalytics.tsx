@@ -180,7 +180,8 @@ const AdminAnalytics = () => {
     if (!quizzes || !attempts) return;
 
     const rateMap: Record<string, { passed: number; failed: number }> = {};
-    (attempts ?? []).forEach((a: any) => {
+    (attempts ?? []).forEach((a) => {
+      if (a.quiz_id == null) return;
       if (!rateMap[a.quiz_id]) rateMap[a.quiz_id] = { passed: 0, failed: 0 };
       if (a.passed) {
         rateMap[a.quiz_id].passed++;
@@ -190,8 +191,8 @@ const AdminAnalytics = () => {
     });
 
     const result: QuizRate[] = quizzes
-      .filter((q: any) => rateMap[q.id]?.passed + rateMap[q.id]?.failed > 0)
-      .map((q: any) => ({
+      .filter((q) => (rateMap[q.id]?.passed ?? 0) + (rateMap[q.id]?.failed ?? 0) > 0)
+      .map((q) => ({
         quiz: q.title.length > 16 ? q.title.substring(0, 16) + "…" : q.title,
         passed: rateMap[q.id]?.passed ?? 0,
         failed: rateMap[q.id]?.failed ?? 0,
