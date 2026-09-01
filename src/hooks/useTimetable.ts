@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../contexts/AuthContext";
@@ -52,7 +52,7 @@ export const useTimetable = () => {
 
       if (error) throw error;
 
-      return (data ?? []).map((t: any) => ({
+      return (data ?? []).map((t: { id: string; course_id: number | null; day_of_week: number; start_time: string; end_time: string; room: string | null; teacher_id: string | null; created_at: string; courses?: { title: string; grade: string | null } | null }) => ({
         id: t.id,
         courseId: t.course_id,
         dayOfWeek: t.day_of_week,
@@ -66,7 +66,7 @@ export const useTimetable = () => {
     },
   });
 
-  const timetable = timetableQuery.data ?? [];
+  const timetable = useMemo(() => timetableQuery.data ?? [], [timetableQuery.data]);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: TIMETABLE_KEY });
 

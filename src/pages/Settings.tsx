@@ -143,7 +143,7 @@ const Settings = () => {
 
       if (error) throw error;
       toast.success("Settings saved!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error saving preferences:", err);
       toast.error("Failed to save settings");
     } finally {
@@ -173,8 +173,8 @@ const Settings = () => {
       setShowPasswordDialog(false);
       setNewPassword("");
       setConfirmPassword("");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to change password");
+    } catch (err: unknown) {
+      toast.error((err instanceof Error ? err.message : null) || "Failed to change password");
     } finally {
       setChangingPassword(false);
     }
@@ -221,7 +221,7 @@ const Settings = () => {
       });
 
       if (_delErr || _delData?.error) {
-        const status = (_delErr as any)?.context?.status as number | undefined;
+        const status = (_delErr as { context?: { status?: number } } | null)?.context?.status;
         let message = "Kuch ruk gaya — dobara try karo";
         if (status === 401) message = "Please sign in again to continue.";
         else if (status === 409) message = "A deletion request is already pending for your account.";
