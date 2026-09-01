@@ -273,7 +273,7 @@ const LessonView = () => {
       });
     } catch (err: unknown) {
       logger.error("Smart Notes link import failed", err);
-      toast.errorgetErrorMessage(err, "Link import failed");
+      toast.error(getErrorMessage(err, "Link import failed"));
       throw err;
     } finally {
       setTimeout(() => setSmartNotesImportProgress(null), 600);
@@ -351,7 +351,7 @@ const LessonView = () => {
       setSmartNotesDraft((prev) => (prev ? prev + "\n\n" : "") + text);
     } catch (err: unknown) {
       logger.error("Smart Notes import failed", err);
-      toast.errorgetErrorMessage(err, "Upload failed");
+      toast.error(getErrorMessage(err, "Upload failed"));
     }
   }, []);
 
@@ -506,7 +506,7 @@ const LessonView = () => {
         setRatingAvg(all.length ? all.reduce((s: number, r: any) => s + r.rating, 0) / all.length : 0);
       }
     } catch (e: unknown) {
-      toast.errorgetErrorMessage(e, "Could not save rating");
+      toast.error(getErrorMessage(e, "Could not save rating"));
     } finally {
       setRatingSaving(false);
     }
@@ -2156,7 +2156,7 @@ const LessonView = () => {
                                         setTimeout(() => URL.revokeObjectURL(url), 5_000);
                                         toast.success("Saved to Downloads");
                                       } catch (err: unknown) {
-                                        toast.errorgetErrorMessage(err, "Download failed");
+                                        toast.error(getErrorMessage(err, "Download failed"));
                                       }
                                     }}
                                     title="Download notes"
@@ -2573,7 +2573,7 @@ const LessonView = () => {
                                 toast.success("Saved to Downloads");
                                 setTimeout(() => URL.revokeObjectURL(url), 5_000);
                               } catch (err: unknown) {
-                                toast.errorgetErrorMessage(err, "Save failed");
+                                toast.error(getErrorMessage(err, "Save failed"));
                               }
                             }}
                           />
