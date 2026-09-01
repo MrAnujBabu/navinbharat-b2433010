@@ -60,7 +60,7 @@ export const useMaterials = (courseId?: number) => {
       const { data: matData, error: matError } = await matQuery;
       if (matError) throw matError;
 
-      const fromMaterials: MaterialWithCourse[] = (matData || []).map((m: any) => ({
+      const fromMaterials: MaterialWithCourse[] = (matData || []).map((m: Record<string, unknown> & { id: string; course_id: number | null; lesson_id: string | null; title: string; description: string | null; file_url: string; file_type: string; file_size: number | null; uploaded_by: string | null; created_at: string; courses?: { title: string; grade: string | null } | null }) => ({
         id: m.id,
         courseId: m.course_id,
         lessonId: m.lesson_id,
@@ -79,7 +79,7 @@ export const useMaterials = (courseId?: number) => {
       let notesQuery = supabase.from("notes").select("*, lessons:lesson_id (course_id, courses:course_id (title, grade))").order("created_at", { ascending: false });
       const { data: notesData } = await notesQuery;
 
-      const fromNotes: MaterialWithCourse[] = (notesData || []).map((n: any) => ({
+      const fromNotes: MaterialWithCourse[] = (notesData || []).map((n: Record<string, unknown> & { id: string; lesson_id: string | null; title: string; pdf_url: string; created_at: string; lessons?: { course_id: number | null; courses?: { title: string; grade: string | null } | null } | null }) => ({
         id: `note-${n.id}`,
         courseId: n.lessons?.course_id || null,
         lessonId: n.lesson_id,
@@ -105,7 +105,7 @@ export const useMaterials = (courseId?: number) => {
 
       const { data: lessonsData } = await lessonsQuery;
 
-      const fromLessons: MaterialWithCourse[] = (lessonsData || []).map((l: any) => ({
+      const fromLessons: MaterialWithCourse[] = (lessonsData || []).map((l: Record<string, unknown> & { id: string; title: string; video_url: string | null; class_pdf_url: string | null; lecture_type: string | null; course_id: number | null; created_at: string; courses?: { title: string; grade: string | null } | null }) => ({
         id: `lesson-${l.id}`,
         courseId: l.course_id,
         lessonId: l.id,
@@ -135,9 +135,9 @@ export const useMaterials = (courseId?: number) => {
       const resolved = combined.map((m, i) => ({ ...m, fileUrl: signed[i] || m.fileUrl }));
 
       setMaterials(resolved);
-    } catch (err: any) {
+    } catch (err) {
       logger.error("Error fetching materials:", err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Failed to fetch materials");
     } finally {
       setLoading(false);
     }
@@ -193,7 +193,7 @@ export const useMaterials = (courseId?: number) => {
       toast.success("Material uploaded");
       await fetchMaterials();
       return true;
-    } catch (err: any) {
+    } catch (err) {
       logger.error("Error uploading material:", err);
       toast.error("Upload nahi hua — file check karke dobara try karo");
       return false;
@@ -219,7 +219,7 @@ export const useMaterials = (courseId?: number) => {
       toast.success("Material deleted");
       await fetchMaterials();
       return true;
-    } catch (err: any) {
+    } catch (err) {
       logger.error("Error deleting material:", err);
       toast.error("Delete nahi ho paaya — dobara try karo");
       return false;

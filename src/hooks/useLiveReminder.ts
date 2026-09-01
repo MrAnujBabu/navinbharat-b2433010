@@ -52,8 +52,8 @@ export function useLiveReminder(sessionId: string | undefined) {
         setIsSet(true);
         toast.success("Reminder set — class shuru hote hi ping karenge");
       }
-    } catch (e: any) {
-      toast.error(e?.message || "Reminder save nahi hua");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Reminder save nahi hua");
     } finally {
       setBusy(false);
     }

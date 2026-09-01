@@ -77,7 +77,7 @@ export const useLessonPdfs = (lessonId?: string) => {
       const newPdf = signedUrl ? { ...inserted, file_url: signedUrl } : inserted;
       setPdfs(prev => [...prev, newPdf]);
       return newPdf;
-    } catch (err: any) {
+    } catch {
       toast.error("PDF upload nahi hua — file check karke dobara try karo");
       return null;
     }
@@ -103,7 +103,7 @@ export const useLessonPdfs = (lessonId?: string) => {
       const newPdf = data as LessonPdf;
       setPdfs(prev => [...prev, newPdf]);
       return newPdf;
-    } catch (err: any) {
+    } catch {
       toast.error("PDF add nahi hui — URL check karke dobara try karo");
       return null;
     }
