@@ -30,3 +30,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local env (publishable keys only — see .env.example)
+.env
+.env.local
+!.env.example
