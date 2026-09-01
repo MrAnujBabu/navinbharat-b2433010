@@ -108,7 +108,7 @@ export function useLessonProgress(
       console.debug("[lesson_progress] upsert failed → queued", err);
       enqueueMutation("lesson_progress.upsert", payload);
     }
-  }, [userId, lessonId]);
+  }, [userId, lessonId, lessonId]);
 
 
   const report = useCallback(

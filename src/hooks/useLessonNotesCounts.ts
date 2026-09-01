@@ -41,7 +41,7 @@ export const useLessonNotesCounts = (
         }
       });
 
-      (pdfsRes.data || []).forEach((row: any) => {
+      (pdfsRes.data || []).forEach((row: { lesson_id: string; file_url: string }) => {
         const lid = row.lesson_id;
         if (!seenUrls[lid]) seenUrls[lid] = new Set<string>();
         // If class_pdf_url equals this row's file_url, the +1 above already counted it.

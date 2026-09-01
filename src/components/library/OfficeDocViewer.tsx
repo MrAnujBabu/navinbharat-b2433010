@@ -95,6 +95,7 @@ export default function OfficeDocViewer({ url, filename, title }: Props) {
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
+    const slideHost = slideRef.current;
     setHtml(null);
     setError(null);
     setLoading(true);
@@ -140,8 +141,7 @@ export default function OfficeDocViewer({ url, filename, title }: Props) {
       // Release the pptx canvases immediately — leaving them attached keeps
       // tens of MB alive until GC, which is the classic OOM path on low-RAM
       // Android after opening several decks in one session.
-      const host = slideRef.current;
-      if (host) host.innerHTML = "";
+      if (slideHost) slideHost.innerHTML = "";
     };
   }, [url, kind]);
 

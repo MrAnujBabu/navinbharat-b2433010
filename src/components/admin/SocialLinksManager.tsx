@@ -35,7 +35,7 @@ const SocialLinksManager = () => {
         toast.error("Failed to load social links");
       } else if (data) {
         const map: Record<string, string> = {};
-        (data as any[]).forEach((row: any) => { map[row.key] = row.value || ""; });
+        (data as { key: string; value: string | null }[]).forEach((row) => { map[row.key] = row.value || ""; });
         setLinks(map);
       }
       setLoading(false);
@@ -53,8 +53,8 @@ const SocialLinksManager = () => {
           .eq("key", key);
       }
       toast.success("Social links saved!");
-    } catch (err: any) {
-      toast.error("Failed to save: " + err.message);
+    } catch (err) {
+      toast.error("Failed to save: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setSaving(false);
     }

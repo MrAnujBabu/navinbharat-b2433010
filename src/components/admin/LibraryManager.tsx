@@ -39,6 +39,33 @@ interface Course {
   title: string;
 }
 
+interface LibraryLessonRow {
+  id: string;
+  title: string;
+  lecture_type?: string | null;
+  course_id?: number | string | null;
+  video_url?: string | null;
+  courses?: { title: string | null } | null;
+  [key: string]: unknown;
+}
+
+interface MaterialRow {
+  id: string;
+  title: string;
+  description?: string | null;
+  file_url?: string | null;
+  courses?: { title: string | null } | null;
+  [key: string]: unknown;
+}
+
+interface NoteRow {
+  id: string;
+  title: string;
+  pdf_url?: string | null;
+  lessons?: { title: string | null } | null;
+  [key: string]: unknown;
+}
+
 interface LibraryManagerProps {
   /**
    * Courses list owned by the parent Admin page. Passed in (rather than
@@ -70,14 +97,14 @@ interface LibraryManagerProps {
 function LibraryManagerImpl({ coursesList }: LibraryManagerProps) {
   const confirmAction = useConfirm();
 
-  const [libraryLessons, setLibraryLessons] = useState<any[]>([]);
-  const [lessons, setLessons] = useState<any[]>([]);
+  const [libraryLessons, setLibraryLessons] = useState<LibraryLessonRow[]>([]);
+  const [lessons, setLessons] = useState<LibraryLessonRow[]>([]);
   const [libraryTypeFilter, setLibraryTypeFilter] = useState<
     "all" | "VIDEO" | "PDF" | "DPP" | "NOTES" | "TEST"
   >("all");
   const [libraryCourseFilter, setLibraryCourseFilter] = useState<string>("all");
-  const [materialsList, setMaterialsList] = useState<any[]>([]);
-  const [notesList, setNotesList] = useState<any[]>([]);
+  const [materialsList, setMaterialsList] = useState<MaterialRow[]>([]);
+  const [notesList, setNotesList] = useState<NoteRow[]>([]);
   const [newMaterial, setNewMaterial] = useState({
     title: "",
     description: "",
@@ -277,7 +304,7 @@ function LibraryManagerImpl({ coursesList }: LibraryManagerProps) {
             <div className="flex flex-wrap items-center gap-2">
               <Select
                 value={libraryTypeFilter}
-                onValueChange={(v: any) => setLibraryTypeFilter(v)}
+                onValueChange={(v) => setLibraryTypeFilter(v as typeof libraryTypeFilter)}
               >
                 <SelectTrigger className="w-[130px] bg-card">
                   <Filter className="h-4 w-4 mr-2" />
@@ -319,7 +346,7 @@ function LibraryManagerImpl({ coursesList }: LibraryManagerProps) {
               </div>
             ) : (
               <div className="divide-y">
-                {filteredLibraryLessons.map((l: any) => (
+                {filteredLibraryLessons.map((l) => (
                   <div
                     key={l.id}
                     className="p-4 hover:bg-muted/30 transition-colors flex items-center justify-between"

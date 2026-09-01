@@ -118,8 +118,8 @@ export default function HeroBannerManager() {
       onDone(`storage://content/${path}`);
 
       toast.success("Image uploaded!");
-    } catch (e: any) {
-      toast.error("Upload failed: " + e.message);
+    } catch (e) {
+      toast.error("Upload failed: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setUploading(false);
     }
@@ -653,8 +653,8 @@ function UrlImportRow({ onImported }: { onImported: (uri: string) => void }) {
       onImported(uri);
       setUrl("");
       toast.success("Image imported to CDN!");
-    } catch (e: any) {
-      toast.error(e.message || "Import failed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Import failed");
     } finally {
       setBusy(false);
     }

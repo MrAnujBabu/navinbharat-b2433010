@@ -28,14 +28,36 @@ interface UserWithRole {
   role: string | null;
 }
 
+interface CourseListItem {
+  id: number;
+  title: string;
+}
+
+interface ProfileLite {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+}
+
+interface EnrollmentRow {
+  id: number;
+  user_id: string;
+  course_id: number;
+  status: string | null;
+  purchased_at: string | null;
+  courses?: { title: string | null } | null;
+  profiles?: ProfileLite | null;
+  [key: string]: unknown;
+}
+
 interface Props {
-  coursesList: any[];
+  coursesList: CourseListItem[];
   usersList: UserWithRole[];
 }
 
 const EnrollmentManagerImpl = ({ coursesList, usersList }: Props) => {
   const confirmAction = useConfirm();
-  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [enrollments, setEnrollments] = useState<EnrollmentRow[]>([]);
   const [enrollLoading, setEnrollLoading] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedCourseId, setSelectedCourseId] = useState("");
@@ -50,16 +72,17 @@ const EnrollmentManagerImpl = ({ coursesList, usersList }: Props) => {
       .select("*, courses(title)")
       .order("purchased_at", { ascending: false })
       .limit(200);
-    const userIds = Array.from(new Set((data || []).map((e: any) => e.user_id).filter(Boolean)));
-    const profileMap = new Map<string, any>();
+    const rows = (data || []) as EnrollmentRow[];
+    const userIds = Array.from(new Set(rows.map((e) => e.user_id).filter(Boolean)));
+    const profileMap = new Map<string, ProfileLite>();
     if (userIds.length) {
       const { data: profs } = await supabase
         .from("profiles")
         .select("id, full_name, email")
         .in("id", userIds);
-      (profs || []).forEach((p: any) => profileMap.set(p.id, p));
+      (profs || []).forEach((p) => profileMap.set(p.id, p));
     }
-    setEnrollments((data || []).map((e: any) => ({ ...e, profiles: profileMap.get(e.user_id) ?? null })));
+    setEnrollments(rows.map((e) => ({ ...e, profiles: profileMap.get(e.user_id) ?? null })));
     setEnrollLoading(false);
   };
 
@@ -167,7 +190,7 @@ const EnrollmentManagerImpl = ({ coursesList, usersList }: Props) => {
 };
 
 type EnrollmentRowProps = {
-  enrollments: any[];
+  enrollments: EnrollmentRow[];
   onRevoke: (id: number) => void;
 };
 
