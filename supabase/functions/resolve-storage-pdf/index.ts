@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
       ...CORS_HEADERS,
       "Content-Type": contentType,
       "X-Content-Type-Options": "nosniff",
-      "Content-Disposition": `inline; filename="${fileName.replace(/[^\w.\-]+/g, "_")}"`,
+      "Content-Disposition": `inline; filename="${fileName.replace(/[^\w.-]+/g, "_")}"`,
       "Cache-Control": "private, max-age=300",
     },
   });

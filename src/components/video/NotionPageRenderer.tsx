@@ -156,7 +156,7 @@ export default function NotionPageRenderer({ url, title, onClose, onReady, onDoc
     try {
       const mod = await import("html2pdf.js");
       const html2pdf = (mod as unknown as { default: any }).default;
-      const safeName = (title || "Notion Page").replace(/[\/\\?%*:|"<>]/g, "_").slice(0, 80);
+      const safeName = (title || "Notion Page").replace(/[/\\?%*:|"<>]/g, "_").slice(0, 80);
       const clone = target.cloneNode(true) as HTMLElement;
       clone.querySelectorAll(".notion-export-ignore").forEach((el) => el.remove());
       const sandbox = document.createElement("div");

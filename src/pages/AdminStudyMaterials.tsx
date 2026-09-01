@@ -138,7 +138,7 @@ export default function AdminStudyMaterials() {
       let kind: StudyMaterialKind = "link";
 
       if (mode === "file" && file) {
-        const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+        const safeName = file.name.replace(/[^\w.-]+/g, "_");
         const path = `${courseId}/${crypto.randomUUID()}-${safeName}`;
         const { error: upErr } = await supabase.storage
           .from(BUCKET)
@@ -247,7 +247,7 @@ export default function AdminStudyMaterials() {
       }
       // Optional: replace the underlying file for file-backed materials.
       if (editReplaceFile && m.kind !== "link") {
-        const safeName = editReplaceFile.name.replace(/[^\w.\-]+/g, "_");
+        const safeName = editReplaceFile.name.replace(/[^\w.-]+/g, "_");
         const path = `${m.course_id}/${crypto.randomUUID()}-${safeName}`;
         const { error: upErr } = await supabase.storage
           .from(BUCKET)

@@ -17,7 +17,7 @@ import { reportError } from "./sentry";
 const APP_FOLDER = "Naveen Bharat";
 
 function sanitizeFilename(name: string): string {
-  const base = (name || "document").replace(/[\/\\?%*:|"<>]/g, "_").trim();
+  const base = (name || "document").replace(/[/\\?%*:|"<>]/g, "_").trim();
   return /\.[a-z0-9]{2,5}$/i.test(base) ? base : `${base}.pdf`;
 }
 
