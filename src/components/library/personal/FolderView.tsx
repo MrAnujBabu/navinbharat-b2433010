@@ -297,7 +297,12 @@ export default function FolderView({ folder, allFolders, onRefreshOuter, sort = 
             <Button
               size="sm"
               variant={selectMode ? "default" : "outline"}
-              onClick={() => { void selectionHaptic(); selectMode ? exitSelection() : setSelectMode(true); }}
+              onClick={() => {
+                void selectionHaptic();
+                if (selectMode) exitSelection();
+                else setSelectMode(true);
+              }}
+
               aria-pressed={selectMode}
             >
               <CheckSquare className="h-3.5 w-3.5 sm:mr-1" />
