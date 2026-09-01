@@ -1,3 +1,4 @@
+import type { LessonAttachment } from "@/hooks/useLessonAttachments";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "../ui/drawer";
 import { useLessonNotes, type LessonNote } from "../../hooks/useLessonNotes";
@@ -217,7 +218,9 @@ export function LessonAttachmentsSheet({ open, onOpenChange, lessonId, lessonTit
                   >
                     <div className="flex-1 min-w-0">
                       <AttachmentRow
-                        attachment={note}
+                        // LessonNote rows lack position/created_at/updated_at;
+                        // AttachmentRow only reads title/file_name/kind/url.
+                        attachment={note as unknown as LessonAttachment}
                         onOpenPdf={(url, fileName) => void handleOpenPdf(url, fileName, note)}
                         resolveUrl={() => getResolvedUrl(note)}
                         variant="compact"
