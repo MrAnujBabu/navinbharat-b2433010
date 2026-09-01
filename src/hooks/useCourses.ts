@@ -30,7 +30,13 @@ export interface CourseInput {
   thumbnailUrl?: string;
 }
 
-function mapCourse(c: Record<string, unknown>): Course {
+interface CourseQueryRow {
+  id: number; title: string; description: string | null; grade: string | null;
+  price: number | null; image_url?: string | null; thumbnail_url?: string | null;
+  created_at: string;
+}
+
+function mapCourse(c: CourseQueryRow): Course {
   return {
     id: c.id,
     title: c.title,
@@ -169,7 +175,7 @@ export const useCourses = () => {
 
       const { error: dbError } = await supabase
         .from("courses")
-        .update(updateData)
+        .update(updateData as never)
         .eq("id", id);
 
       if (dbError) throw dbError;
