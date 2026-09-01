@@ -463,10 +463,9 @@ const FastPdfReader = forwardRef<FastPdfReaderHandle, Props>(
       return true;
     }, [readerId, route]);
 
-    useImperativeHandle(ref, () => ({
-      getScrollEl: () => scrollRef.current,
-      getIframeEl: () => null,
-    }), []);
+    // NOTE: the imperative handle is installed further down, after the zoom
+    // state it exposes exists (see "Reader imperative API").
+
 
     // Lazy-init so the very first render already uses the viewport width
     // (avoids the brief 800px overshoot that clipped the page on mobile).
