@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { reportError } from "@/lib/sentry";
+import { getErrorMessage } from "@/lib/errorMessage";
+import type { DbChapter, DbCourse, DbLesson } from "@/types/supabase";
+import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import { Button } from "../components/ui/button";
@@ -74,12 +77,12 @@ const SortableItem = ({ id, children }: { id: string; children: (handle: React.R
 const AdminUpload = () => {
   const confirmAction = useConfirm();
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<(User & { full_name?: string | null }) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Breadcrumb drill-down state
-  const [courses, setCourses] = useState<any[]>([]);
-  const [chapters, setChapters] = useState<any[]>([]);
+  const [courses, setCourses] = useState<DbCourse[]>([]);
+  const [chapters, setChapters] = useState<DbChapter[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const [chaptersLoading, setChaptersLoading] = useState(false);
@@ -108,7 +111,7 @@ const AdminUpload = () => {
   const [savingChapterEdit, setSavingChapterEdit] = useState(false);
 
   // Sub-chapters for current chapter
-  const [subChapters, setSubChapters] = useState<any[]>([]);
+  const [subChapters, setSubChapters] = useState<DbChapter[]>([]);
 
   // Upload form states
   const [uploadType, setUploadType] = useState<UploadType>("VIDEO");
@@ -142,7 +145,7 @@ const AdminUpload = () => {
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
 
   // Edit lesson state
-  const [editingLesson, setEditingLesson] = useState<any | null>(null);
+  const [editingLesson, setEditingLesson] = useState<DbLesson | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editVideoUrl, setEditVideoUrl] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -158,7 +161,7 @@ const AdminUpload = () => {
   const [editUploadingPdfs, setEditUploadingPdfs] = useState(false);
 
   // Recent lessons for selected chapter
-  const [lessons, setLessons] = useState<any[]>([]);
+  const [lessons, setLessons] = useState<DbLesson[]>([]);
 
   const selectedCourse = courses.find(c => c.id === selectedCourseId);
   const selectedChapter = chapters.find(c => c.id === selectedChapterId) ||
