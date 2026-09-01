@@ -164,14 +164,14 @@ describe("Login Page", () => {
       });
     });
 
-    it("should navigate to dashboard on successful login", async () => {
+    it("should navigate to downloads on successful login", async () => {
       // Simulate already-authenticated state — the Login page's useEffect should
-      // redirect to /dashboard via react-router's useNavigate.
+      // redirect to /downloads (default landing for the reader flow).
       mockAuthState = { isAuthenticated: true, isLoading: false, user: { id: "1" } };
       renderLogin();
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
+        expect(mockNavigate).toHaveBeenCalledWith("/downloads", { replace: true });
       });
     });
 
