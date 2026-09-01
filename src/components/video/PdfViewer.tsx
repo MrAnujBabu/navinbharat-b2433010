@@ -27,6 +27,8 @@ interface PdfViewerProps {
   onPageChange?: (page: number) => void;
   /** Fires once when scroll / iframe refs are mounted and queryable. */
   onReady?: () => void;
+  /** Canvas reader zoom factor changed (1 = fit width). */
+  onZoomChange?: (zoom: number) => void;
   /** Disable the nested loader when a parent shell renders progress. */
   showLoadingOverlay?: boolean;
   readerId?: string;
@@ -35,6 +37,13 @@ interface PdfViewerProps {
 export type PdfViewerHandle = {
   getScrollEl: () => HTMLElement | null;
   getIframeEl: () => HTMLIFrameElement | null;
+  /** null when the active branch is not the canvas reader. */
+  getZoom: () => number | null;
+  zoomBy: (factor: number) => void;
+  fitWidth: () => void;
+  getNumPages: () => number;
+  goToPage: (page: number) => void;
+  findPages: (query: string) => Promise<number[]>;
 };
 
 const isMarkdownUrl = (u: string) => /\.(md|markdown)(\?|#|$)/i.test(u);
@@ -57,7 +66,7 @@ const mustUseIframe = (u: string) =>
 
 
 const PdfViewerInner = forwardRef<PdfViewerHandle, PdfViewerProps>(
-  ({ url: rawUrl, title, filename, chromeVisible = true, onSurfaceTap, onFirstByte, initialPage, onPageChange, onReady, showLoadingOverlay = true, readerId }, ref) => {
+  ({ url: rawUrl, title, filename, chromeVisible = true, onSurfaceTap, onFirstByte, initialPage, onPageChange, onReady, onZoomChange, showLoadingOverlay = true, readerId }, ref) => {
     // Screen protection removed here; only LessonView applies FLAG_SECURE for students.
     useEffect(() => pushPlayerBusy(), []);
 
