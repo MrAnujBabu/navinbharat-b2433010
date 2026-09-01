@@ -108,9 +108,19 @@ const PdfViewerInner = forwardRef<PdfViewerHandle, PdfViewerProps>(
         getScrollEl: () =>
           mdRef.current?.getScrollEl() ?? pdfRef.current?.getScrollEl() ?? null,
         getIframeEl: () => iframeRef.current ?? pdfRef.current?.getIframeEl() ?? null,
+        // Canvas-reader-only controls (zoom / page jump / search). The iframe
+        // and markdown branches simply report "unavailable" so the chrome can
+        // hide the controls instead of rendering dead buttons.
+        getZoom: () => pdfRef.current?.getZoom() ?? null,
+        zoomBy: (factor: number) => pdfRef.current?.zoomBy(factor),
+        fitWidth: () => pdfRef.current?.fitWidth(),
+        getNumPages: () => pdfRef.current?.getNumPages() ?? 0,
+        goToPage: (page: number) => pdfRef.current?.goToPage(page),
+        findPages: async (query: string) => (await pdfRef.current?.findPages(query)) ?? [],
       }),
       []
     );
+
 
     // iframe-branch state (safe to declare regardless of branch — React only
     // cares that the hook order is stable per component instance).
