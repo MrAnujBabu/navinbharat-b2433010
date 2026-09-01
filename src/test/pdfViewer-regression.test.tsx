@@ -19,8 +19,8 @@ import {
 } from "../lib/pdfViewerUrl";
 
 // ── Mock heavy children so we can assert on the wrapper + FAB only ────────
-vi.mock("../components/video/PdfViewer", () => {
-  const React = require("react");
+vi.mock("../components/video/PdfViewer", async () => {
+  const React = await import("react");
   const PdfViewer = React.forwardRef(function PdfViewer(_props: any, ref: any) {
     React.useImperativeHandle(ref, () => ({
       getScrollEl: () => null,
@@ -41,7 +41,7 @@ vi.mock("../components/video/PdfViewer", () => {
 vi.mock("../components/viewer/AutoScrollFab", () => ({
   __esModule: true,
   default: (props: any) =>
-    require("react").createElement("div", {
+    ReactForMock.createElement("div", {
       "data-testid": "autoscroll-fab",
       "data-visible": String(props.visible),
       "data-bottom-offset": String(props.bottomOffset),
