@@ -1,4 +1,4 @@
-interface AttendanceQueryRow { id: number; student_id: string; date: string; status: string; created_at: string }
+interface AttendanceQueryRow { id: number; student_id: number; date: string; status: string; created_at: string }
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../contexts/AuthContext";
