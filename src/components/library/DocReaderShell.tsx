@@ -210,10 +210,23 @@ export default function DocReaderShell({
     return () => { document.body.removeAttribute("data-reader-rotated"); };
   }, [pseudoLandscape]);
 
+  /** Search must never auto-hide under the user's thumb mid-query. */
+  const searchOpenRef = useRef(false);
+  useEffect(() => { searchOpenRef.current = searchOpen; }, [searchOpen]);
   const scheduleHide = () => {
     if (idleTimer.current) window.clearTimeout(idleTimer.current);
-    idleTimer.current = window.setTimeout(() => setHeaderVisible(false), 2500);
+    idleTimer.current = window.setTimeout(() => {
+      if (searchOpenRef.current) return;
+      setHeaderVisible(false);
+    }, 2500);
   };
+
+  // Keep the toolbar pinned for as long as the search bar is open.
+  useEffect(() => {
+    if (!searchOpen) return;
+    setHeaderVisible(true);
+    if (idleTimer.current) window.clearTimeout(idleTimer.current);
+  }, [searchOpen]);
 
   // Telemetry + restore saved reading position.
   useEffect(() => {
