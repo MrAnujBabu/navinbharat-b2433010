@@ -217,3 +217,4 @@ export type DbMaterial = Database['public']['Tables']['materials']['Row'];
 export type DbMessage = Database['public']['Tables']['messages']['Row'];
 export type DbNotice = Database['public']['Tables']['notices']['Row'];
 export type DbAttendance = Database['public']['Tables']['attendance']['Row'];
+export type DbChapter = Database['public']['Tables']['chapters']['Row'];
