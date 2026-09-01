@@ -71,10 +71,10 @@ export const useProfiles = () => {
       if (dbError) throw dbError;
       if (roleError) throw roleError;
       const roleById = new Map<string, string>();
-      (roleRows || []).forEach((r: any) => {
+      (roleRows || []).forEach((r: { user_id: string; role: string }) => {
         if (!roleById.has(r.user_id)) roleById.set(r.user_id, r.role);
       });
-      return (rows || []).map((p: any) => ({
+      return (rows || []).map((p: { id: string; full_name: string | null; email: string | null; mobile: string | null; created_at: string | null }) => ({
         id: p.id,
         fullName: p.full_name,
         email: p.email,
@@ -82,7 +82,7 @@ export const useProfiles = () => {
         role: roleById.get(p.id) ?? "student",
         createdAt: p.created_at,
       }));
-    } catch (err: any) {
+    } catch (err) {
       logger.error("Error fetching all profiles:", err);
       return [];
     }
@@ -110,7 +110,7 @@ export const useProfiles = () => {
         toast.success("Profile updated");
         await queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
         return true;
-      } catch (err: any) {
+      } catch (err) {
         logger.error("Error updating profile:", err);
         toast.error("Profile update nahi hui — dobara try karo");
         return false;

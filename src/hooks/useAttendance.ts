@@ -54,9 +54,9 @@ export const useAttendance = (date?: string) => {
       }));
 
       if (aliveRef.current) setAttendance(formatted);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error fetching attendance:", err);
-      if (aliveRef.current) setError(err.message);
+      if (aliveRef.current) setError(err instanceof Error ? err.message : String(err));
     } finally {
       if (aliveRef.current) setLoading(false);
     }
@@ -79,7 +79,7 @@ export const useAttendance = (date?: string) => {
         status: a.status,
         createdAt: a.created_at,
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error fetching student attendance:", err);
       return [];
     }
@@ -103,7 +103,7 @@ export const useAttendance = (date?: string) => {
       toast.success("Attendance marked");
       await fetchAttendance();
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error marking attendance:", err);
       toast.error("Attendance save nahi hui — dobara try karo");
       return false;
@@ -129,7 +129,7 @@ export const useAttendance = (date?: string) => {
       toast.success("Attendance saved");
       await fetchAttendance();
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error in bulk attendance:", err);
       toast.error("Kuch records save nahi hue — dobara try karo");
       return false;

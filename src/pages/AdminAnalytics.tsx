@@ -95,7 +95,6 @@ const AdminAnalytics = () => {
       setLoading(false);
       setLastRefresh(new Date());
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { if (isAdmin) fetchAll(); }, [isAdmin, fetchAll]);

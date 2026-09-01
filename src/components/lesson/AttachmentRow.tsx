@@ -80,7 +80,7 @@ export function AttachmentRow({ attachment, onOpenPdf, resolveUrl, onDownloaded,
         { id: t },
       );
       onDownloaded?.(attachment.title || attachment.file_name, url, fileName, attachment.kind.toUpperCase());
-    } catch (err: any) {
+    } catch (err) {
       reportError(err, { surface: "AttachmentRow.download" });
       // Last resort: hand the file to the system browser / download manager so
       // a tap never ends with nothing happening.
@@ -89,7 +89,7 @@ export function AttachmentRow({ attachment, onOpenPdf, resolveUrl, onDownloaded,
         await openResource({ url, kind: "link" });
         toast.success("Opening file…", { id: t });
       } catch {
-        toast.error(err?.message || "Download failed", { id: t });
+        toast.error((err instanceof Error ? err.message : null) || "Download failed", { id: t });
       }
     }
   };

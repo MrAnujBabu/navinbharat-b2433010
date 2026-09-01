@@ -84,9 +84,9 @@ export const useCourses = () => {
       setCourses(resolved);
       setCached(CACHE_KEY, resolved);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error fetching courses:", err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -108,7 +108,7 @@ export const useCourses = () => {
         thumbnailUrl: await resolveContentUrl(c.thumbnailUrl),
       };
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error fetching course:", err);
       toast.error("Failed to fetch course");
       return null;
@@ -125,7 +125,7 @@ export const useCourses = () => {
 
       if (dbError) throw dbError;
       return (data || []).map(mapCourse);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error fetching courses by grade:", err);
       return [];
     }
@@ -150,9 +150,9 @@ export const useCourses = () => {
       toast.success("Course created successfully!");
       invalidateCache(CACHE_KEY); await fetchCourses(true);
       return mapCourse(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error creating course:", err);
-      toast.error(err.message || "Failed to create course");
+      toast.error(err instanceof Error ? err.message : String(err) || "Failed to create course");
       return null;
     }
   }, [fetchCourses]);
@@ -176,9 +176,9 @@ export const useCourses = () => {
       toast.success("Course updated successfully!");
       invalidateCache(CACHE_KEY); await fetchCourses(true);
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error updating course:", err);
-      toast.error(err.message || "Failed to update course");
+      toast.error(err instanceof Error ? err.message : String(err) || "Failed to update course");
       return false;
     }
   }, [fetchCourses]);
@@ -194,9 +194,9 @@ export const useCourses = () => {
       toast.success("Course deleted successfully!");
       invalidateCache(CACHE_KEY); await fetchCourses(true);
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Error deleting course:", err);
-      toast.error(err.message || "Failed to delete course");
+      toast.error(err instanceof Error ? err.message : String(err) || "Failed to delete course");
       return false;
     }
   }, [fetchCourses]);

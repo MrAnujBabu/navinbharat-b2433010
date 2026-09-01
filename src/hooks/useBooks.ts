@@ -57,7 +57,7 @@ export function useBooks() {
 
       if (dbError) throw dbError;
       setBooks((data || []) as Book[]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error fetching books:', err);
       setError(err);
     } finally {
@@ -98,7 +98,7 @@ export function useBooks() {
       if (dbError) throw dbError;
       toast({ title: 'Book added successfully!' });
       await fetchBooks();
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error adding book:', err);
       toast({ title: 'Failed to add book', variant: 'destructive' });
     } finally {
@@ -140,7 +140,7 @@ export function useBooks() {
       if (dbError) throw dbError;
       toast({ title: 'Book updated successfully!' });
       await fetchBooks();
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error updating book:', err);
       toast({ title: 'Failed to update book', variant: 'destructive' });
     } finally {
@@ -159,7 +159,7 @@ export function useBooks() {
       if (dbError) throw dbError;
       toast({ title: 'Book deleted successfully!' });
       await fetchBooks();
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error deleting book:', err);
       toast({ title: 'Failed to delete book', variant: 'destructive' });
     } finally {

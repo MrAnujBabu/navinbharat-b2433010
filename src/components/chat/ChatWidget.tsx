@@ -43,11 +43,30 @@ const WELCOME_MSG = "🙏 Namaste! Main **Naveen Bharat AI Sahayak** hoon — Na
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
+interface SpeechRecognitionResultLike {
+  transcript: string;
+}
+interface SpeechRecognitionEventLike {
+  results: { [index: number]: { [index: number]: SpeechRecognitionResultLike } } & Iterable<{ [index: number]: SpeechRecognitionResultLike }>;
+}
+interface SpeechRecognitionLike {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  continuous: boolean;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
 // Web Speech API type declarations
 declare global {
   interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
+    SpeechRecognition: new () => SpeechRecognitionLike;
+    webkitSpeechRecognition: new () => SpeechRecognitionLike;
   }
 }
 
@@ -127,7 +146,7 @@ const ChatWidget = forwardRef<HTMLDivElement>(() => {
   // Voice input state
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
   // Image/doc upload state
   const [uploadedFile, setUploadedFile] = useState<{ file: File; previewUrl: string; type: "image" | "pdf" } | null>(null);
@@ -214,9 +233,9 @@ const ChatWidget = forwardRef<HTMLDivElement>(() => {
 
     recognition.onstart = () => setIsListening(true);
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEventLike) => {
       const transcript = Array.from(event.results)
-        .map((result: any) => result[0].transcript)
+        .map((result) => result[0].transcript)
         .join("");
       setInput(transcript);
     };

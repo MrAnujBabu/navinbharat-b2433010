@@ -62,7 +62,7 @@ export const useLectureSchedules = () => {
           courseName: s.courses?.title || null,
         }))
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       reportError(err, { surface: "useLectureSchedules.fetch" });
     } finally {
       setLoading(false);
@@ -90,8 +90,8 @@ export const useLectureSchedules = () => {
       toast.success("Schedule created!");
       await fetchSchedules();
       return true;
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create schedule");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err) || "Failed to create schedule");
       return false;
     }
   }, [user, isAdmin, isTeacher, fetchSchedules]);
@@ -116,8 +116,8 @@ export const useLectureSchedules = () => {
       toast.success("Schedule updated!");
       await fetchSchedules();
       return true;
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update schedule");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err) || "Failed to update schedule");
       return false;
     }
   }, [user, isAdmin, isTeacher, fetchSchedules]);
@@ -129,8 +129,8 @@ export const useLectureSchedules = () => {
       toast.success("Schedule deleted");
       await fetchSchedules();
       return true;
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err) || "Failed to delete");
       return false;
     }
   }, [fetchSchedules]);
