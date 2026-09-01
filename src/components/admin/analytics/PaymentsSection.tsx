@@ -119,7 +119,7 @@ export default function PaymentsSection({ range }: Props) {
           : Promise.resolve({ data: [] as { id: number; title: string }[] }),
         userIds.length
           ? supabase.from("profiles").select("id, full_name").in("id", userIds)
-          : Promise.resolve({ data: [] as { id: number; title: string }[] }),
+          : Promise.resolve({ data: [] as { id: string; full_name: string | null }[] }),
       ]);
 
       if (cancelled) return;

@@ -52,6 +52,7 @@ interface LibraryLessonRow {
 interface MaterialRow {
   id: string;
   title: string;
+  file_type?: string | null;
   description?: string | null;
   file_url?: string | null;
   courses?: { title: string | null } | null;

@@ -36,6 +36,8 @@ import {
 interface CourseListItem {
   id: number;
   title: string;
+  grade?: string | number | null;
+  price?: number | null;
   [key: string]: unknown;
 }
 
@@ -46,12 +48,14 @@ interface ChapterRow {
   icon_url?: string | null;
   position?: number;
   parent_id?: string | null;
+  thumbnail_url?: string | null;
   [key: string]: unknown;
 }
 
 interface LessonRow {
   id: string;
   title: string;
+  position?: number | null;
   lecture_type?: string;
   is_locked?: boolean;
   video_url?: string | null;
