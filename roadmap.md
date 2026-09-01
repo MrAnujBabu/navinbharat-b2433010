@@ -15,3 +15,5 @@
 - [x] Deep PDF delivery perf pass + ELO scoring (962/1000) → `docs/perf/PDF-PERF-2026-09-01.md`
 - [x] Fix unbounded canvas retention on long PDFs (`shouldReleaseDistantPages` page-count rule + test)
 - [ ] Re-measure reader memory on a 300-page scan on a real device after the APK build
+
+- [x] Clear preview typecheck errors (Error `cause` needs ES2022.Error lib — added to tsconfig.app.json)
