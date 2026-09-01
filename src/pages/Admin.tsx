@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { reportError } from "@/lib/sentry";
+import { getErrorMessage } from "@/lib/errorMessage";
+import type { DbCourse, DbProfile } from "@/types/supabase";
+import type { Database } from "@/integrations/supabase/types";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { openResource } from "@/lib/openResource";
 import { supabase } from "../integrations/supabase/client";
@@ -160,9 +163,9 @@ const Admin = () => {
       if (coursesData) setCoursesList(coursesData);
 
       const { data: profilesData } = await supabase.from('profiles').select('*');
-      const profileMap = new Map<string, any>((profilesData || []).map((p: any) => [p.id, p]));
-      const withProfile = (rows: any[] | null) =>
-        (rows || []).map((r: any) => ({ ...r, profiles: profileMap.get(r.user_id) ?? null }));
+      const profileMap = new Map<string, DbProfile>((profilesData || []).map((p) => [p.id, p]));
+      const withProfile = <T extends { user_id: string | null }>(rows: T[] | null) =>
+        (rows || []).map((r) => ({ ...r, profiles: profileMap.get(r.user_id) ?? null }));
 
       // profiles is not FK-linked to payment tables — join client-side.
       const { data: payData } = await supabase
@@ -286,7 +289,7 @@ const Admin = () => {
   [usersList, teacherSearch]);
 
   // --- EXPORT ---
-  const exportToCSV = (data: any[], filename: string) => {
+  const exportToCSV = (data: Record<string, unknown>[], filename: string) => {
     if (data.length === 0) { toast.error("No data to export"); return; }
     const headers = Object.keys(data[0]).filter(k => !k.includes('id') && typeof data[0][k] !== 'object');
     const csvContent = [
@@ -477,7 +480,7 @@ const Admin = () => {
     else { toast.success("Course deleted"); fetchDashboardData(); }
   };
 
-  const handleEditCourse = (course: any) => {
+  const handleEditCourse = (course: DbCourse) => {
     setEditingCourseId(course.id);
     setEditCourseData({ title: course.title || "", description: course.description || "", price: String(course.price || ""), grade: course.grade || "", startDate: course.start_date || "", endDate: course.end_date || "" });
     setEditThumbnailFile(null);
@@ -502,7 +505,7 @@ const Admin = () => {
       thumbnailUrl = `storage://content/thumbnails/${fileName}`;
 
     }
-    const updateData: any = { title: editCourseData.title, description: editCourseData.description, price: parseFloat(editCourseData.price) || 0, grade: editCourseData.grade, start_date: editCourseData.startDate || null, end_date: editCourseData.endDate || null };
+    const updateData: Database['public']['Tables']['courses']['Update'] = { title: editCourseData.title, description: editCourseData.description, price: parseFloat(editCourseData.price) || 0, grade: editCourseData.grade, start_date: editCourseData.startDate || null, end_date: editCourseData.endDate || null };
     if (thumbnailUrl) { updateData.image_url = thumbnailUrl; updateData.thumbnail_url = thumbnailUrl; }
     const { error } = await supabase.from('courses').update(updateData).eq('id', editingCourseId);
     if (error) toast.error(getErrorMessage(error));
@@ -710,10 +713,10 @@ const Admin = () => {
               const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
               const completedRzp = razorpayPayments.filter(p => p.status === 'completed');
               const approvedManual = payments.filter(p => p.status === 'approved');
-              const todayRzp = completedRzp.filter(p => p.created_at?.startsWith(todayStr)).reduce((s: number, p: any) => s + (p.amount || 0), 0);
-              const todayManual = approvedManual.filter(p => p.created_at?.startsWith(todayStr)).reduce((s: number, p: any) => s + (p.amount || 0), 0);
-              const monthRzp = completedRzp.filter(p => p.created_at >= monthStart).reduce((s: number, p: any) => s + (p.amount || 0), 0);
-              const monthManual = approvedManual.filter(p => p.created_at >= monthStart).reduce((s: number, p: any) => s + (p.amount || 0), 0);
+              const todayRzp = completedRzp.filter(p => p.created_at?.startsWith(todayStr)).reduce((s: number, p: { amount: number | null }) => s + (p.amount || 0), 0);
+              const todayManual = approvedManual.filter(p => p.created_at?.startsWith(todayStr)).reduce((s: number, p: { amount: number | null }) => s + (p.amount || 0), 0);
+              const monthRzp = completedRzp.filter(p => p.created_at >= monthStart).reduce((s: number, p: { amount: number | null }) => s + (p.amount || 0), 0);
+              const monthManual = approvedManual.filter(p => p.created_at >= monthStart).reduce((s: number, p: { amount: number | null }) => s + (p.amount || 0), 0);
               return (
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
                   <Card className="p-3 text-center">
@@ -733,12 +736,12 @@ const Admin = () => {
                   </Card>
                   <Card className="p-3 text-center">
                     <p className="text-xs text-muted-foreground">Manual UPI</p>
-                    <p className="text-xl font-bold">₹{approvedManual.reduce((s: number, p: any) => s + (p.amount || 0), 0).toLocaleString()}</p>
+                    <p className="text-xl font-bold">₹{approvedManual.reduce((s: number, p: { amount: number | null }) => s + (p.amount || 0), 0).toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground">{approvedManual.length} approved</p>
                   </Card>
                   <Card className="p-3 text-center">
                     <p className="text-xs text-muted-foreground">Razorpay</p>
-                    <p className="text-xl font-bold">₹{completedRzp.reduce((s: number, p: any) => s + (p.amount || 0), 0).toLocaleString()}</p>
+                    <p className="text-xl font-bold">₹{completedRzp.reduce((s: number, p: { amount: number | null }) => s + (p.amount || 0), 0).toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground">{completedRzp.length} completed</p>
                   </Card>
                 </div>
@@ -755,7 +758,7 @@ const Admin = () => {
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input placeholder="Search name, UTR, course..." value={paymentSearch} onChange={(e) => setPaymentSearch(e.target.value)} className="pl-9" />
                     </div>
-                    <Select value={paymentStatusFilter} onValueChange={(v: any) => setPaymentStatusFilter(v)}>
+                    <Select value={paymentStatusFilter} onValueChange={(v) => setPaymentStatusFilter(v as typeof paymentStatusFilter)}>
                       <SelectTrigger className="w-[130px]"><Filter className="h-4 w-4 mr-2" /><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Status</SelectItem>
@@ -877,7 +880,7 @@ const Admin = () => {
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input placeholder="Search by name, email, phone..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-9 bg-card" />
                     </div>
-                    <Select value={userRoleFilter} onValueChange={(v: any) => setUserRoleFilter(v)}>
+                    <Select value={userRoleFilter} onValueChange={(v) => setUserRoleFilter(v as typeof userRoleFilter)}>
                       <SelectTrigger className="w-[130px] bg-card"><Filter className="h-4 w-4 mr-2" /><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Roles</SelectItem>
