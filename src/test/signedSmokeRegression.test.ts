@@ -28,7 +28,7 @@ describe("signed APK smoke regression guards", () => {
     expect(profile).toContain('navigate("/settings")');
   });
 
-  it("does not enable Maestro debug screenshots on the API 33 hard-gate smoke path", () => {
+  itIfCi(".github/workflows/signed-apk-smoke.yml")("does not enable Maestro debug screenshots on the API 33 hard-gate smoke path", () => {
     const workflow = readFileSync(resolve(root, ".github/workflows/signed-apk-smoke.yml"), "utf8");
     const primarySmoke = workflow.slice(
       workflow.indexOf('maestro test \\\n                  --env MAESTRO_EMAIL'),
@@ -41,7 +41,7 @@ describe("signed APK smoke regression guards", () => {
     expect(primarySmoke).toContain("--output signed-smoke.xml");
   });
 
-  it("dumps logcat before driver-screenshot-null classification", () => {
+  itIfCi(".github/workflows/signed-apk-smoke.yml")("dumps logcat before driver-screenshot-null classification", () => {
     const workflow = readFileSync(resolve(root, ".github/workflows/signed-apk-smoke.yml"), "utf8");
     const failureBlock = workflow.slice(
       workflow.indexOf("# Dump logcat before classification"),
