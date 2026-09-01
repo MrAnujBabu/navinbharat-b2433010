@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { lazyWithRetry } from "../lib/lazyWithRetry";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
@@ -87,7 +87,7 @@ const AdminAnalytics = () => {
     if (!authLoading && !isAdmin) navigate("/login");
   }, [authLoading, isAdmin, navigate]);
 
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
       await Promise.all([fetchDAU(), fetchCourseCompletion(), fetchQuizRates(), fetchTopStudents()]);
@@ -95,9 +95,10 @@ const AdminAnalytics = () => {
       setLoading(false);
       setLastRefresh(new Date());
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  useEffect(() => { if (isAdmin) fetchAll(); }, [isAdmin]);
+  useEffect(() => { if (isAdmin) fetchAll(); }, [isAdmin, fetchAll]);
 
   // ── 1. Daily Active Users (last 7 days via quiz_attempts) ──────────────────
   const fetchDAU = async () => {

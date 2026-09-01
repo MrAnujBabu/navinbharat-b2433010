@@ -108,7 +108,7 @@ export function useLessonProgress(
       console.debug("[lesson_progress] upsert failed → queued", err);
       enqueueMutation("lesson_progress.upsert", payload);
     }
-  }, [userId, lessonId, lessonId]);
+  }, [userId, lessonId]);
 
 
   const report = useCallback(
@@ -132,7 +132,7 @@ export function useLessonProgress(
         pendingRef.current = true;
       }
     },
-    [user?.id, lessonId, writeNow]
+    [userId, lessonId, writeNow]
   );
 
   const flush = useCallback(() => {
