@@ -110,6 +110,11 @@ export default function FolderGrid({
     };
   }, [folders, moveTargets]);
 
+  // Early return lives below the hooks so hook order stays stable across renders.
+  if (hideWhenEmpty && folders.length === 0) return null;
+
+
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
