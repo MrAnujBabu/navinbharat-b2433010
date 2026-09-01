@@ -308,8 +308,14 @@ function LazyPage({
  * pdf.js worker can read them; remote URLs stream via range requests.
  */
 const FastPdfReader = forwardRef<FastPdfReaderHandle, Props>(
-  ({ url, title, showLoadingOverlay = true, onSurfaceTap, onFirstByte, initialPage, onPageChange, onReady, readerId }, ref) => {
+  ({ url, title, showLoadingOverlay = true, onSurfaceTap, onFirstByte, initialPage, onPageChange, onReady, onZoomChange, readerId }, ref) => {
     const scrollRef = useRef<HTMLDivElement>(null);
+    /** pdf.js document proxy — used for in-reader text search. */
+    const pdfDocRef = useRef<{
+      numPages: number;
+      getPage: (n: number) => Promise<{ getTextContent: () => Promise<{ items: unknown[] }> }>;
+    } | null>(null);
+
     // State mirror of the scroll surface node: lets effects re-run once the
     // surface actually mounts (it does not exist during the loading branch).
     const [surfaceEl, setSurfaceEl] = useState<HTMLDivElement | null>(null);
